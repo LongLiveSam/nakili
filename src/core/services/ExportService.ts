@@ -27,7 +27,12 @@ async function shareOrDownload(blob: Blob, filename: string, title: string): Pro
   };
   const file = new File([blob], filename, { type: blob.type });
   if (nav.share && nav.canShare?.({ files: [file] })) {
-    await nav.share({ files: [file], title });
+    try {
+      await nav.share({ files: [file], title });
+    } catch (err) {
+      if ((err as DOMException)?.name === 'AbortError') return;
+      throw err;
+    }
     return;
   }
   downloadBlob(blob, filename);
