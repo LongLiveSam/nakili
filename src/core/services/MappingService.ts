@@ -102,3 +102,54 @@ export function buildTranscript(finals: FinalResult[]): {
   }
   return { text, segments };
 }
+
+export interface CursorMapping {
+  segment: TranscriptSegment | null;
+  approximate: boolean;
+}
+
+export function findSegmentForCursor(
+  segments: TranscriptSegment[],
+  cursorOffset: number,
+): CursorMapping {
+  if (segments.length === 0) return { segment: null, approximate: true };
+
+  const sorted = [...segments].sort((a, b) => a.startCharOffset - b.startCharOffset);
+
+  // Binary search: rightmost segment whose start is <= cursor.
+  let lo = 0;
+  let hi = sorted.length - 1;
+  let candidate = -1;
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1;
+    if (sorted[mid].startCharOffset <= cursorOffset) {
+      candidate = mid;
+      lo = mid + 1;
+    } else {
+      hi = mid - 1;
+    }
+  }
+
+  if (candidate === -1) {
+    // Cursor precedes everything: fall forward to first non-collapsed segment.
+    const first = sorted.find((s) => s.endCharOffset >= s.startCharOffset) ?? null;
+    return { segment: first, approximate: true };
+  }
+
+  // Walk back past any collapsed (zero/negative-width) segments.
+  let s = sorted[candidate];
+  while (s.endCharOffset < s.startCharOffset && candidate > 0) {
+    candidate--;
+    s = sorted[candidate];
+  }
+  if (s.endCharOffset < s.startCharOffset) {
+    const first = sorted.find((x) => x.endCharOffset >= x.startCharOffset) ?? null;
+    return { segment: first, approximate: true };
+  }
+
+  if (cursorOffset <= s.endCharOffset) {
+    return { segment: s, approximate: s.approximate };
+  }
+  // Cursor sits after `s`'s end (gap): approximate fallback.
+  return { segment: s, approximate: true };
+}
