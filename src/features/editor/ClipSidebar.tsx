@@ -13,6 +13,7 @@ interface Props {
   approximate: boolean;
   playingIndex: number | null;
   progressFraction?: number;
+  panelOpen?: boolean;
   onTogglePlay: (index: number) => void;
   onSeek?: (fraction: number) => void;
 }
@@ -48,7 +49,7 @@ function SeekSlider({
 }
 
 export function ClipSidebar({
-  chunks, activeClipIndex, approximate, playingIndex, progressFraction, onTogglePlay, onSeek,
+  chunks, activeClipIndex, approximate, playingIndex, progressFraction, panelOpen, onTogglePlay, onSeek,
 }: Props) {
   const activeRef = useRef<HTMLLIElement>(null);
 
@@ -57,7 +58,11 @@ export function ClipSidebar({
   }, [activeClipIndex]);
 
   return (
-    <aside aria-label="Audio clips" className="clip-sidebar">
+    <aside
+      aria-label="Audio clips"
+      className={`clip-sidebar clip-panel${panelOpen ? ' open' : ''}`}
+      data-open={panelOpen ? 'true' : 'false'}
+    >
       <h2>Clips</h2>
       <ul role="list" style={{ listStyle: 'none', padding: 0, display: 'grid', gap: 4 }}>
         {chunks.map((c) => {

@@ -18,6 +18,7 @@ export default function EditorView() {
   const taRef = useRef<HTMLTextAreaElement>(null);
   const [renaming, setRenaming] = useState(false);
   const [titleDraft, setTitleDraft] = useState('');
+  const [panelOpen, setPanelOpen] = useState(false);
 
   useEffect(() => {
     void load(articleId);
@@ -28,7 +29,9 @@ export default function EditorView() {
 
   const syncCursor = () => {
     const ta = taRef.current;
-    if (ta) setCursor(ta.selectionStart ?? 0);
+    if (!ta) return;
+    setCursor(ta.selectionStart ?? 0);
+    if (useEditorStore.getState().activeClipIndex !== null) setPanelOpen(true);
   };
 
   if (!article) {
@@ -69,9 +72,18 @@ export default function EditorView() {
           activeClipIndex={activeClipIndex}
           approximate={approximate}
           playingIndex={playingIndex}
+          panelOpen={panelOpen}
           onTogglePlay={(index) => void toggle(index)}
           onSeek={seek}
         />
+
+        <button
+          className="clip-panel-toggle"
+          aria-expanded={panelOpen}
+          onClick={() => setPanelOpen((o) => !o)}
+        >
+          {panelOpen ? 'Hide clips' : 'Clips'}
+        </button>
 
         <ConfirmDialog
           open={renaming}

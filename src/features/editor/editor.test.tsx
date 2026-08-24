@@ -92,4 +92,27 @@ describe('editor', () => {
     expect(await screen.findByText('Renamed!')).toBeInTheDocument();
     expect((await db.articles.get('a1'))!.title).toBe('Renamed!');
   });
+
+  it('auto-opens the clip panel when the cursor moves onto a mapped region', async () => {
+    render(<EditorView />);
+    const ta = await screen.findByRole('textbox', { name: /transcript/i });
+
+    const aside = screen.getByRole('complementary', { name: /audio clips/i });
+    expect(aside.dataset.open).toBe('false');
+
+    fireEvent.select(ta, { target: { selectionStart: 2 } });
+    await waitFor(() => expect(aside.dataset.open).toBe('true'));
+
+    const toggleBtn = screen.getByRole('button', { name: /hide clips/i });
+    expect(toggleBtn).toHaveAttribute('aria-expanded', 'true');
+  });
+
+  it('manual toggle closes and reopens the panel', async () => {
+    render(<EditorView />);
+    const btn = await screen.findByRole('button', { name: /^clips$/i });
+    await userEvent.click(btn);
+    const aside = screen.getByRole('complementary', { name: /audio clips/i });
+    expect(aside.dataset.open).toBe('true');
+    expect(screen.getByRole('button', { name: /hide clips/i })).toBeInTheDocument();
+  });
 });
