@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useEditorStore } from './editorStore';
 import { useAppStore } from '../../ui/appStore';
+import { useToastStore } from '../../ui/toastStore';
+import { exportTranscript } from '../../core/services/ExportService';
 import { getChunks, putArticle } from '../../core/db/repositories';
 import { ClipSidebar, type ClipRowData } from './ClipSidebar';
 import { ConfirmDialog } from '../library/ConfirmDialog';
@@ -14,6 +16,7 @@ export default function EditorView() {
   const playingIndex = usePlaybackStore((s) => s.playingIndex);
   const toggle = usePlaybackStore((s) => s.toggle);
   const seek = usePlaybackStore((s) => s.seek);
+  const showToast = useToastStore((s) => s.showToast);
   const [chunks, setChunks] = useState<ClipRowData[]>([]);
   const taRef = useRef<HTMLTextAreaElement>(null);
   const [renaming, setRenaming] = useState(false);
@@ -48,6 +51,18 @@ export default function EditorView() {
               <span aria-live="polite" style={{ color: 'var(--fg-subtle)' }}>
                 {saved ? 'Saved' : 'Saving…'}
               </span>
+              <button
+                aria-label="Share"
+                onClick={async () => {
+                  try {
+                    await exportTranscript(article.id);
+                  } catch {
+                    showToast('Export failed');
+                  }
+                }}
+              >
+                Share
+              </button>
               <button aria-label="Rename" onClick={() => { setTitleDraft(article.title); setRenaming(true); }}>
                 Rename
               </button>

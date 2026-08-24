@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { useLibraryStore, formatDuration } from './libraryStore';
 import { ConfirmDialog } from './ConfirmDialog';
 import { useAppStore } from '../../ui/appStore';
+import { useToastStore } from '../../ui/toastStore';
+import { exportTranscript, exportFullRecording } from '../../core/services/ExportService';
 import type { Article } from '../../core/models';
 
 function formatDate(ms: number): string {
@@ -17,6 +19,7 @@ export default function LibraryView() {
   const duplicateArticle = useLibraryStore((s) => s.duplicateArticle);
   const deleteArticle = useLibraryStore((s) => s.deleteArticle);
   const navigate = useAppStore((s) => s.navigate);
+  const showToast = useToastStore((s) => s.showToast);
   const [menuFor, setMenuFor] = useState<string | null>(null);
   const [renaming, setRenaming] = useState<Article | null>(null);
   const [renameText, setRenameText] = useState('');
@@ -75,7 +78,12 @@ export default function LibraryView() {
                   <button onClick={async () => { setMenuFor(null); await duplicateArticle(a.id); }}>
                     Duplicate
                   </button>
-                  {/* Export item added in Task 14. */}
+                  <button role="menuitem" onClick={async () => { setMenuFor(null); try { await exportTranscript(a.id); } catch { showToast('Export failed'); } }}>
+                    Export text
+                  </button>
+                  <button role="menuitem" onClick={async () => { setMenuFor(null); try { await exportFullRecording(a.id); } catch { showToast('Export failed'); } }}>
+                    Export audio
+                  </button>
                   <button className="danger" onClick={() => { setDeleting(a); setMenuFor(null); }}>
                     Delete
                   </button>
