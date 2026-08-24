@@ -113,6 +113,15 @@ describe('editor', () => {
     await userEvent.click(btn);
     const aside = screen.getByRole('complementary', { name: /audio clips/i });
     expect(aside.dataset.open).toBe('true');
-    expect(screen.getByRole('button', { name: /hide clips/i })).toBeInTheDocument();
+    const hideBtn = screen.getByRole('button', { name: /hide clips/i });
+    expect(hideBtn).toHaveAttribute('aria-expanded', 'true');
+
+    await userEvent.click(hideBtn);
+    expect(aside.dataset.open).toBe('false');
+    expect(screen.getByRole('button', { name: /^clips$/i })).toHaveAttribute('aria-expanded', 'false');
+
+    await userEvent.click(screen.getByRole('button', { name: /^clips$/i }));
+    expect(aside.dataset.open).toBe('true');
+    expect(screen.getByRole('button', { name: /hide clips/i })).toHaveAttribute('aria-expanded', 'true');
   });
 });
