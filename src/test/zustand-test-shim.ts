@@ -21,11 +21,11 @@ export const create = (<T>(initializer: StateCreator<T, [], []>) => {
   );
 
   const useBoundStore = Object.assign(
-    (selector: (state: T) => unknown) =>
+    (selector?: (state: T) => unknown) =>
       useSyncExternalStore(
         store.subscribe,
-        () => selector(store.getState()),
-        () => selector(store.getInitialState()),
+        () => (selector ? selector(store.getState()) : store.getState()),
+        () => (selector ? selector(store.getInitialState()) : store.getInitialState()),
       ),
     {
       getState: store.getState,

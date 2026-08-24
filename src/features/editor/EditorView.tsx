@@ -11,7 +11,9 @@ export default function EditorView() {
   const articleId = useAppStore((s) => s.activeArticleId)!;
   const { article, load, setText, setCursor, activeClipIndex, approximate, saved } =
     useEditorStore((s) => s);
-  const { playingIndex, toggle, seek, currentTimeSec, durationSec } = usePlaybackStore((s) => s);
+  const playingIndex = usePlaybackStore((s) => s.playingIndex);
+  const toggle = usePlaybackStore((s) => s.toggle);
+  const seek = usePlaybackStore((s) => s.seek);
   const [chunks, setChunks] = useState<ClipRowData[]>([]);
   const taRef = useRef<HTMLTextAreaElement>(null);
   const [renaming, setRenaming] = useState(false);
@@ -67,7 +69,6 @@ export default function EditorView() {
           activeClipIndex={activeClipIndex}
           approximate={approximate}
           playingIndex={playingIndex}
-          progressFraction={durationSec > 0 ? currentTimeSec / durationSec : 0}
           onTogglePlay={(index) => void toggle(index)}
           onSeek={seek}
         />

@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { usePlaybackStore } from '../playback/playbackStore';
 
 export interface ClipRowData {
   index: number;
@@ -20,6 +21,30 @@ function fmt(sec: number): string {
   const m = Math.floor(sec / 60);
   const s = Math.round(sec % 60);
   return `${m}:${String(s).padStart(2, '0')}`;
+}
+
+function SeekSlider({
+  index, fraction, onSeek,
+}: {
+  index: number;
+  fraction?: number;
+  onSeek: (fraction: number) => void;
+}) {
+  const currentTimeSec = usePlaybackStore((s) => s.currentTimeSec);
+  const durationSec = usePlaybackStore((s) => s.durationSec);
+  const value = fraction ?? (durationSec > 0 ? currentTimeSec / durationSec : 0);
+  return (
+    <input
+      type="range"
+      min={0}
+      max={1}
+      step={0.01}
+      value={value}
+      aria-label={`Seek within clip ${index + 1}`}
+      onChange={(e) => onSeek(Number(e.target.value))}
+      style={{ width: '100%' }}
+    />
+  );
 }
 
 export function ClipSidebar({
@@ -62,16 +87,7 @@ export function ClipSidebar({
                 </span>
               </button>
               {isPlaying && onSeek && (
-                <input
-                  type="range"
-                  min={0}
-                  max={1}
-                  step={0.01}
-                  value={progressFraction ?? 0}
-                  aria-label={`Seek within clip ${c.index + 1}`}
-                  onChange={(e) => onSeek(Number(e.target.value))}
-                  style={{ width: '100%' }}
-                />
+                <SeekSlider index={c.index} fraction={progressFraction} onSeek={onSeek} />
               )}
             </li>
           );
