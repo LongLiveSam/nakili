@@ -1,3 +1,4 @@
+import 'fake-indexeddb/auto';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
@@ -38,6 +39,7 @@ describe('app shell', () => {
   it('navigates to record view on New article (placeholder creates id)', async () => {
     render(<App />);
     await userEvent.click(screen.getByRole('button', { name: /new article/i }));
-    expect(useAppStore.getState().view).toBe('record');
+    await waitFor(() => expect(useAppStore.getState().view).toBe('record'));
+    expect(useAppStore.getState().activeArticleId).toBeTruthy();
   });
 });
