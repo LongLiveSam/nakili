@@ -97,8 +97,8 @@ describe('recording view', () => {
     const { speech, recorder } = makeFakes(true);
     __setServicesForTest(speech, recorder);
     render(<RecordingView />);
-    expect(await screen.findByRole('button', { name: /back to articles/i })).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: /back to articles/i }));
+    expect(await screen.findByRole('button', { name: /back to recordings/i })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /back to recordings/i }));
     expect(useAppStore.getState().view).toBe('home');
   });
 });

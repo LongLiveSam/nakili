@@ -48,8 +48,8 @@ export default function EditorView() {
       <main className="view editor-layout">
         <div className="editor-main">
           <div className="view-header">
-            <button aria-label="Back to articles" onClick={() => navigate('home')}>
-              ← Articles
+            <button aria-label="Back to recordings" onClick={() => navigate('home')}>
+              ← Recordings
             </button>
             <h1>{article.title}</h1>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -107,7 +107,7 @@ export default function EditorView() {
 
         <ConfirmDialog
           open={renaming}
-          title="Rename article"
+          title="Rename recording"
           confirmLabel="Save"
           onCancel={() => setRenaming(false)}
           onConfirm={async () => {

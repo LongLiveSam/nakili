@@ -43,7 +43,15 @@ export class RecorderService {
       (() => navigator.mediaDevices.getUserMedia({ audio: true }));
     this.createRecorder =
       deps.createRecorder ??
-      ((stream) => new MediaRecorder(stream) as unknown as MediaRecorderLike);
+      ((stream) => {
+        // Pin the container/codec so stored chunks are self-describing and
+        // playable by <audio> without sniffing.
+        try {
+          return new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' }) as unknown as MediaRecorderLike;
+        } catch {
+          return new MediaRecorder(stream) as unknown as MediaRecorderLike;
+        }
+      });
     this.setIntervalFn = deps.setInterval ?? setInterval.bind(globalThis);
     this.clearIntervalFn = deps.clearInterval ?? clearInterval.bind(globalThis);
   }

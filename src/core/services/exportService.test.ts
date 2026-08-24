@@ -33,37 +33,34 @@ describe('slugify', () => {
   });
 });
 
-type ShareCapableNavigator = Navigator & {
-  canShare?: (data: { files?: File[] }) => boolean;
-  share?: (data: { files?: File[]; title?: string }) => Promise<void>;
-};
-
-describe('shareOrDownload', () => {
+// Exports always download (the Web Share sheet's cancel path is
+// indistinguishable from failure in the UI), so these verify the download
+// path directly regardless of navigator.share availability.
+describe('export downloads', () => {
   afterEach(() => {
     vi.restoreAllMocks();
-    const nav = navigator as unknown as Record<string, unknown>;
-    Reflect.deleteProperty(nav, 'share');
-    Reflect.deleteProperty(nav, 'canShare');
   });
 
-  it('treats user-cancelled share as success without downloading', async () => {
-    await putArticle(makeArticle({ id: 'a1' }));
-    const nav = navigator as ShareCapableNavigator;
+  it('downloads the transcript as <slug>.txt', async () => {
+    await putArticle(makeArticle({ id: 'a1', transcriptText: 'hello world' }));
     const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
-    nav.canShare = () => true;
-    nav.share = vi.fn(() =>
-      Promise.reject(Object.assign(new Error('The user aborted a request.'), { name: 'AbortError' })),
-    );
-    await expect(exportTranscript('a1')).resolves.toBeUndefined();
-    expect(nav.share).toHaveBeenCalledOnce();
-    expect(clickSpy).not.toHaveBeenCalled();
+    const appended: HTMLAnchorElement[] = [];
+    vi.spyOn(document.body, 'appendChild').mockImplementation(((node: Node) => {
+      appended.push(node as HTMLAnchorElement);
+      return node;
+    }) as never);
+    const revokeSpy = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
+    vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock');
+
+    await exportTranscript('a1');
+
+    expect(appended.length).toBe(1);
+    expect(appended[0].download).toBe('draft.txt');
+    expect(clickSpy).toHaveBeenCalledOnce();
+    expect(revokeSpy).toHaveBeenCalledWith('blob:mock');
   });
 
-  it('rethrows non-abort share failures so callers can toast', async () => {
-    await putArticle(makeArticle({ id: 'a1' }));
-    const nav = navigator as ShareCapableNavigator;
-    nav.canShare = () => true;
-    nav.share = vi.fn(() => Promise.reject(new Error('permission denied')));
-    await expect(exportTranscript('a1')).rejects.toThrow('permission denied');
+  it('throws for a missing article so callers can toast', async () => {
+    await expect(exportTranscript('missing')).rejects.toThrow(/not found/);
   });
 });

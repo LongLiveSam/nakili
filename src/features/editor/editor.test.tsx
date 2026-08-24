@@ -41,7 +41,7 @@ beforeEach(async () => {
 describe('editor', () => {
   it('navigates back to the library via the header affordance', async () => {
     render(<EditorView />);
-    const back = await screen.findByRole('button', { name: /back to articles/i });
+    const back = await screen.findByRole('button', { name: /back to recordings/i });
     await userEvent.click(back);
     expect(useAppStore.getState().view).toBe('home');
   });

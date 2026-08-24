@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { getAudioBlob, getChunks } from '../../core/db/repositories';
 import { useAppStore } from '../../ui/appStore';
+import { useToastStore } from '../../ui/toastStore';
 
 interface PlaybackState {
   playingIndex: number | null;
@@ -23,6 +24,13 @@ function ensureAudio(): HTMLAudioElement {
     if (audioEl) usePlaybackStore.setState({ durationSec: audioEl.duration || 0 });
   });
   audioEl.addEventListener('ended', () => {
+    usePlaybackStore.setState({ playingIndex: null });
+  });
+  audioEl.addEventListener('error', () => {
+    const detail = audioEl?.error
+      ? `${audioEl.error.message || audioEl.error.code}`
+      : 'unknown';
+    useToastStore.getState().showToast(`Playback error: ${detail}`);
     usePlaybackStore.setState({ playingIndex: null });
   });
   return audioEl;
@@ -55,6 +63,12 @@ export const usePlaybackStore = create<PlaybackState>((set, get) => ({
     if (currentUrl) URL.revokeObjectURL(currentUrl);
     currentUrl = URL.createObjectURL(blob);
     el.src = currentUrl;
+    // Some engines need an explicit load after re-pointing src on a reused element.
+    try {
+      el.load();
+    } catch {
+      /* jsdom: no media backend */
+    }
     set({
       playingIndex: index,
       currentTimeSec: 0,

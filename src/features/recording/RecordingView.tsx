@@ -33,8 +33,8 @@ export default function RecordingView() {
     <main className="view">
       <div className="view-header">
         {status !== 'recording' && (
-          <button aria-label="Back to articles" onClick={() => navigate('home')}>
-            ← Articles
+          <button aria-label="Back to recordings" onClick={() => navigate('home')}>
+            ← Recordings
           </button>
         )}
         <h1>

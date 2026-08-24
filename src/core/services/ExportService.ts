@@ -20,21 +20,10 @@ export function downloadBlob(blob: Blob, filename: string): void {
   URL.revokeObjectURL(url);
 }
 
-async function shareOrDownload(blob: Blob, filename: string, title: string): Promise<void> {
-  const nav = navigator as Navigator & {
-    canShare?: (data: { files?: File[] }) => boolean;
-    share?: (data: { files?: File[]; title?: string }) => Promise<void>;
-  };
-  const file = new File([blob], filename, { type: blob.type });
-  if (nav.share && nav.canShare?.({ files: [file] })) {
-    try {
-      await nav.share({ files: [file], title });
-    } catch (err) {
-      if ((err as DOMException)?.name === 'AbortError') return;
-      throw err;
-    }
-    return;
-  }
+async function shareOrDownload(blob: Blob, filename: string): Promise<void> {
+  // Always download. The Web Share API on desktop hijacks exports into the OS
+  // share sheet whose cancel path looks identical to a failure; a download is
+  // unambiguous on every platform.
   downloadBlob(blob, filename);
 }
 
@@ -43,7 +32,7 @@ export async function exportTranscript(articleId: string): Promise<void> {
   const article = await getArticle(articleId);
   if (!article) throw new Error(`article not found: ${articleId}`);
   const blob = new Blob([article.transcriptText], { type: 'text/plain;charset=utf-8' });
-  await shareOrDownload(blob, `${slugify(article.title)}.txt`, article.title);
+  await shareOrDownload(blob, `${slugify(article.title)}.txt`);
 }
 
 export async function exportFullRecording(articleId: string): Promise<void> {
@@ -61,5 +50,5 @@ export async function exportFullRecording(articleId: string): Promise<void> {
     if (b) blobs.push(b);
   }
   const full = new Blob(blobs, { type: 'audio/webm' });
-  await shareOrDownload(full, `${slugify(article.title)}.webm`, article.title);
+  await shareOrDownload(full, `${slugify(article.title)}.webm`);
 }

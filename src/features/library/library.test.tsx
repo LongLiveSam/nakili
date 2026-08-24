@@ -49,7 +49,7 @@ describe('library', () => {
 
   it('creates an article and navigates to record view with its id', async () => {
     render(<LibraryView />);
-    await userEvent.click(screen.getByRole('button', { name: /new article/i }));
+    await userEvent.click(screen.getByRole('button', { name: /new recording/i }));
     await waitFor(() => expect(useAppStore.getState().view).toBe('record'));
     expect(useAppStore.getState().activeArticleId).toBeTruthy();
   });
@@ -73,7 +73,7 @@ describe('library', () => {
     await userEvent.click(screen.getByRole('button', { name: /^delete$/i }));
     // Confirmation dialog appears before actual deletion:
     expect(useLibraryStore.getState().articles.length).toBe(1);
-    await userEvent.click(screen.getByRole('button', { name: /^delete article$/i }));
+    await userEvent.click(screen.getByRole('button', { name: /^delete recording$/i }));
     await waitFor(() => expect(useLibraryStore.getState().articles.length).toBe(0));
   });
 

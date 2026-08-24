@@ -31,7 +31,7 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
     const id = crypto.randomUUID();
     const now = Date.now();
     await repo.putArticle({
-      id, title: 'Untitled article',
+      id, title: 'Untitled recording',
       createdAt: now, updatedAt: now,
       durationSec: 0, transcriptText: '',
     });

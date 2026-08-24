@@ -1,32 +1,33 @@
-# React + TypeScript + Vite
+# Dictation Scribe
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Private, local-first dictation for long-form writing. Speak, watch words appear
+in real time, edit the transcript like a document — with the original audio
+always one click away as 30-second clips mapped to your text.
 
-Currently, two official plugins are available:
+## Run it
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```powershell
+npm install
+npm run dev      # http://localhost:5173
+npm test         # Vitest suite
+npm run build    # production build to dist/
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+Requires **Chrome or Edge** (uses the Web Speech API).
+
+## Using it
+
+- **New recording** → speak → **Stop** saves transcript + audio.
+- Click anywhere in a transcript; the matching 30 s clip highlights in the
+  Clips panel for instant playback ("~" = approximate match after edits).
+- Export via **Share** (editor) or the ⋮ menu: `.txt` transcript / `.webm` audio.
+
+## Privacy
+
+Everything stays in your browser's IndexedDB. No account, no server, no sync.
+Speech-to-text is your browser's own service. Clearing site data deletes all
+recordings.
+
+## Contact
+
+culturedrabbit@gmail.com

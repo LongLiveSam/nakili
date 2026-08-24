@@ -35,14 +35,14 @@ export default function LibraryView() {
   return (
     <main className="view">
       <div className="view-header">
-        <h1>Articles</h1>
-        <button className="primary" onClick={() => void handleNew()}>New article</button>
+        <h1>Recordings</h1>
+        <button className="primary" onClick={() => void handleNew()}>New recording</button>
       </div>
 
       {!loaded ? (
         <p>Loading…</p>
       ) : articles.length === 0 ? (
-        <p>No articles yet. Choose “New article” to start dictating.</p>
+        <p>No recordings yet. Choose “New recording” to start dictating.</p>
       ) : (
         <ul role="list" style={{ listStyle: 'none', padding: 0, display: 'grid', gap: 8 }}>
           {articles.map((a) => (
@@ -96,7 +96,7 @@ export default function LibraryView() {
 
       <ConfirmDialog
         open={renaming !== null}
-        title="Rename article"
+        title="Rename recording"
         confirmLabel="Save"
         onCancel={() => setRenaming(null)}
         onConfirm={async () => {
@@ -113,7 +113,7 @@ export default function LibraryView() {
       <ConfirmDialog
         open={deleting !== null}
         title={`Delete “${deleting?.title ?? ''}”?`}
-        confirmLabel="Delete article"
+        confirmLabel="Delete recording"
         danger
         onCancel={() => setDeleting(null)}
         onConfirm={async () => {
