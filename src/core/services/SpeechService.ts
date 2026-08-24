@@ -45,6 +45,8 @@ export class SpeechService {
   private recognition: RecognitionLike | null = null;
   private now: () => number;
   private startedAt = 0;
+  private pendingRestart = false;
+  private restartError: string | null = null;
   stopRequested = false;
 
   constructor(opts: { createRecognition?: () => RecognitionLike; now?: () => number } = {}) {
@@ -54,25 +56,40 @@ export class SpeechService {
 
   start(): void {
     this.stopRequested = false;
-    try {
-      if (!this.recognition) {
-        const rec = this.createRecognition();
-        rec.continuous = true;
-        rec.interimResults = true;
-        rec.onresult = (e) => this.handleResult(e);
-        rec.onerror = (e) => this.handleError(e.error);
-        this.recognition = rec;
+    this.pendingRestart = false;
+    this.restartError = null;
+    if (!this.recognition) {
+      try {
+        this.recognition = this.buildRecognition();
+      } catch (err) {
+        if (err instanceof Error) throw err;
+        throw new Error('unsupported');
       }
+    }
+    try {
       this.recognition.start();
-    } catch {
-      throw new Error('unsupported');
+    } catch (err) {
+      if (err instanceof Error) throw err;
+      throw new Error('speech-recognition-failed-to-start');
     }
     this.startedAt = this.now();
   }
 
   stop(): void {
     this.stopRequested = true;
+    this.pendingRestart = false;
+    this.restartError = null;
     this.recognition?.stop();
+  }
+
+  private buildRecognition(): RecognitionLike {
+    const rec = this.createRecognition();
+    rec.continuous = true;
+    rec.interimResults = true;
+    rec.onresult = (e) => this.handleResult(e);
+    rec.onerror = (e) => this.handleError(e.error);
+    rec.onend = () => this.handleEnd();
+    return rec;
   }
 
   private handleResult(e: RecognitionEventLike): void {
@@ -93,7 +110,16 @@ export class SpeechService {
       this.onError?.(error, true);
       return;
     }
-    if (this.stopRequested || !this.recognition) return;
+    if (this.stopRequested) return;
+    this.pendingRestart = true;
+    this.restartError = error;
+  }
+
+  private handleEnd(): void {
+    if (!this.pendingRestart || !this.recognition) return;
+    this.pendingRestart = false;
+    const error = this.restartError ?? 'unknown';
+    this.restartError = null;
     try {
       this.recognition.start();
     } catch {
