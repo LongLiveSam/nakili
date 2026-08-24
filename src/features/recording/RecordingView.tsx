@@ -17,6 +17,7 @@ export default function RecordingView() {
   const start = useRecordingStore((s) => s.start);
   const stopAndSave = useRecordingStore((s) => s.stopAndSave);
   const articleId = useAppStore((s) => s.activeArticleId)!;
+  const navigate = useAppStore((s) => s.navigate);
   const startedRef = useRef(false);
 
   useEffect(() => {
@@ -31,6 +32,11 @@ export default function RecordingView() {
   return (
     <main className="view">
       <div className="view-header">
+        {status !== 'recording' && (
+          <button aria-label="Back to articles" onClick={() => navigate('home')}>
+            ← Articles
+          </button>
+        )}
         <h1>
           {status === 'recording' ? '● Recording · ' : 'Ready · '}
           <time>{formatClock(elapsedSec)}</time>

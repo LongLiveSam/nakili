@@ -11,6 +11,7 @@ import { ClipPlayerProvider } from '../playback/ClipPlayerProvider';
 
 export default function EditorView() {
   const articleId = useAppStore((s) => s.activeArticleId)!;
+  const navigate = useAppStore((s) => s.navigate);
   const { article, load, setText, setCursor, activeClipIndex, approximate, saved } =
     useEditorStore((s) => s);
   const playingIndex = usePlaybackStore((s) => s.playingIndex);
@@ -24,6 +25,7 @@ export default function EditorView() {
   const [panelOpen, setPanelOpen] = useState(false);
 
   useEffect(() => {
+    if (!articleId) return;
     void load(articleId);
     void getChunks(articleId).then((rows) =>
       setChunks(rows.map(({ index, startTimeSec, endTimeSec }) => ({ index, startTimeSec, endTimeSec }))),
@@ -46,6 +48,9 @@ export default function EditorView() {
       <main className="view editor-layout">
         <div className="editor-main">
           <div className="view-header">
+            <button aria-label="Back to articles" onClick={() => navigate('home')}>
+              ← Articles
+            </button>
             <h1>{article.title}</h1>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               <span aria-live="polite" style={{ color: 'var(--fg-subtle)' }}>

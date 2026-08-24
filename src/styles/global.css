@@ -81,6 +81,10 @@ textarea { resize: none; }
   border: 1px solid var(--border); border-radius: var(--radius); padding: 8px;
 }
 .clip-sidebar h2 { font-size: 1rem; margin: 4px 8px 8px; }
+.clip-sidebar input[type="range"] {
+  min-height: 48px;
+  margin: 0;
+}
 .visually-hidden {
   position: absolute; width: 1px; height: 1px;
   margin: -1px; padding: 0; overflow: hidden;

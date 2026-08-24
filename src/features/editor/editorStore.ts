@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { Article, TranscriptSegment } from '../../core/models';
 import { adjustSegmentsAfterEdit, findSegmentForCursor } from '../../core/services/MappingService';
 import { getArticle, putArticle, putSegments, getSegments, getChunks } from '../../core/db/repositories';
+import { useToastStore } from '../../ui/toastStore';
 
 let saveTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -50,9 +51,13 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       void (async () => {
         const cur = get();
         if (!cur.article) return;
-        await putArticle(cur.article);
-        await putSegments(cur.segments);
-        set({ saved: true });
+        try {
+          await putArticle(cur.article);
+          await putSegments(cur.segments);
+          set({ saved: true });
+        } catch {
+          useToastStore.getState().showToast('Autosave failed — will retry on next edit.');
+        }
       })();
     }, 500);
   },

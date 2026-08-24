@@ -7,6 +7,7 @@ import { useEditorStore } from './editorStore';
 import { db } from '../../core/db/db';
 import { putArticle, saveSessionAudio, putSegments } from '../../core/db/repositories';
 import { useAppStore } from '../../ui/appStore';
+import { useToastStore } from '../../ui/toastStore';
 
 // jsdom does not implement <dialog>.showModal; minimal stub (test-only).
 if (!HTMLDialogElement.prototype.showModal) {
@@ -38,6 +39,13 @@ beforeEach(async () => {
 });
 
 describe('editor', () => {
+  it('navigates back to the library via the header affordance', async () => {
+    render(<EditorView />);
+    const back = await screen.findByRole('button', { name: /back to articles/i });
+    await userEvent.click(back);
+    expect(useAppStore.getState().view).toBe('home');
+  });
+
   it('loads article text and clip list', async () => {
     render(<EditorView />);
     const ta = await screen.findByRole('textbox', { name: /transcript/i });
@@ -80,6 +88,26 @@ describe('editor', () => {
     expect(segs.find((s) => s.id === 's2')).toMatchObject({ startCharOffset: 15, approximate: false });
     expect(useEditorStore.getState().saved).toBe(true);
     vi.useRealTimers();
+  });
+
+  it('shows a toast and stays unsaved when autosave fails', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const putSpy = vi.spyOn(db.articles, 'put').mockRejectedValueOnce(new Error('quota exceeded'));
+    try {
+      render(<EditorView />);
+      const ta = await screen.findByRole('textbox', { name: /transcript/i });
+      fireEvent.change(ta, { target: { value: 'hello YY world more words' } });
+      expect(useEditorStore.getState().saved).toBe(false);
+
+      await vi.advanceTimersByTimeAsync(600);
+      expect(useEditorStore.getState().saved).toBe(false);
+      expect(
+        useToastStore.getState().toasts.some((t) => t.message === 'Autosave failed — will retry on next edit.'),
+      ).toBe(true);
+    } finally {
+      putSpy.mockRestore();
+      vi.useRealTimers();
+    }
   });
 
   it('renames the article from the editor header', async () => {

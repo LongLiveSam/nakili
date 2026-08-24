@@ -6,6 +6,7 @@ export interface MediaRecorderLike {
   state: 'inactive' | 'recording';
   ondataavailable: ((e: { data: Blob }) => void) | null;
   onstop: (() => void) | null;
+  onerror: ((e: { error?: unknown }) => void) | null;
 }
 
 export interface RecordedChunk {
@@ -23,6 +24,8 @@ interface RecorderDeps {
 }
 
 export class RecorderService {
+  onError: ((message: string) => void) | null = null;
+
   private getUserMedia: () => Promise<MediaStream>;
   private createRecorder: (stream: MediaStream) => MediaRecorderLike;
   private setIntervalFn: typeof setInterval;
@@ -77,6 +80,9 @@ export class RecorderService {
   private beginChunk(index: number): void {
     this.recorder = this.createRecorder(this.stream!);
     const startedAtMs = Date.now();
+    this.recorder.onerror = () => {
+      this.onError?.('Recording error');
+    };
     this.recorder.ondataavailable = (e) => {
       this.chunks.push({
         index,

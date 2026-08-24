@@ -6,6 +6,7 @@ import {
   saveSessionAudio, putArticle, getArticle, putSegments,
 } from '../../core/db/repositories';
 import { useAppStore } from '../../ui/appStore';
+import { useToastStore } from '../../ui/toastStore';
 
 let speech: SpeechService | null = null;
 let recorder: RecorderService | null = null;
@@ -64,7 +65,11 @@ export const useRecordingStore = create<RecordingState>((set, get) => ({
     speech!.onError = (err, fatal) => {
       if (fatal) {
         set({ errorMessage: `Speech recognition error: ${err}. Audio keeps recording; live text paused.` });
+        useToastStore.getState().showToast('Speech recognition error. Audio keeps recording.');
       }
+    };
+    recorder!.onError = () => {
+      useToastStore.getState().showToast('Audio recording error — audio captured so far is kept.');
     };
     recorder!.start();
     speech!.start();

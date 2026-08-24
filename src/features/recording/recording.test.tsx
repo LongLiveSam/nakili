@@ -21,6 +21,7 @@ function makeFakes(denied = false) {
   ];
   const recorder = {
     requestMicrophone: vi.fn(async () => { if (denied) throw new Error('NotAllowedError'); }),
+    onError: null,
     start: vi.fn(),
     stop: vi.fn(async () => chunks),
     releaseStream: vi.fn(),
@@ -90,5 +91,14 @@ describe('recording view', () => {
     expect(await screen.findByText(/microphone access was denied/i)).toBeInTheDocument();
     expect(useRecordingStore.getState().status).toBe('idle');
     expect(recorder.start).not.toHaveBeenCalled();
+  });
+
+  it('shows a back affordance while not recording', async () => {
+    const { speech, recorder } = makeFakes(true);
+    __setServicesForTest(speech, recorder);
+    render(<RecordingView />);
+    expect(await screen.findByRole('button', { name: /back to articles/i })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /back to articles/i }));
+    expect(useAppStore.getState().view).toBe('home');
   });
 });

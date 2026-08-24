@@ -16,6 +16,7 @@ function makeFakeRecorder() {
     }),
     ondataavailable: null,
     onstop: null,
+    onerror: null,
   };
   return rec;
 }

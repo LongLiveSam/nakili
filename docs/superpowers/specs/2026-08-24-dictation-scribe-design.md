@@ -12,7 +12,7 @@ Dictation Scribe is a browser-based dictation tool for creating long-form articl
 | Question | Decision |
 |---|---|
 | Platform | Web app only (no native iOS/Android) |
-| Stack | React 18 + TypeScript + Vite |
+| Stack | React 19 + TypeScript + Vite (as shipped by the current Vite react-ts template) |
 | Browser support | Chrome/Edge only; other browsers get an unsupported-browser notice |
 | Form factor | Responsive: desktop-first layout, mobile-adapted (clip panel becomes collapsible bottom panel) |
 | Speech recognition | Web Speech API (`SpeechRecognition`), online/server-backed — acceptable |
@@ -33,7 +33,7 @@ Dictation Scribe is a browser-based dictation tool for creating long-form articl
 
 ### 4.1 Stack
 
-- **Vite + React 18 + TypeScript**, strict mode.
+- **Vite + React 19 + TypeScript (as shipped by the current Vite react-ts template)**, strict mode.
 - **Styling:** plain CSS with custom properties. System font stack (`system-ui, -apple-system, Segoe UI, Roboto, sans-serif`). No CSS frameworks, no gradients, no shadows beyond subtle platform-conventional borders.
 - **State:** Zustand stores per feature: `libraryStore`, `sessionStore` (recording), `editorStore`, `playbackStore`.
 - **Persistence:** Dexie (IndexedDB). Autosave debounced ~500 ms after each editor change.
