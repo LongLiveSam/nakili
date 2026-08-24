@@ -4,7 +4,7 @@ import { ConfirmDialog } from './ConfirmDialog';
 import { useAppStore } from '../../ui/appStore';
 import { useToastStore } from '../../ui/toastStore';
 import { exportTranscript, exportFullRecording } from '../../core/services/ExportService';
-import { MoreVerticalIcon } from '../../ui/icons';
+import { MoreVerticalIcon, MicIcon } from '../../ui/icons';
 import type { Article } from '../../core/models';
 
 function formatDate(ms: number): string {
@@ -41,9 +41,36 @@ export default function LibraryView() {
       </div>
 
       {!loaded ? (
-        <p>Loading…</p>
+        <div aria-busy="true" aria-live="polite" style={{ display: 'grid', gap: 8 }}>
+          <span className="visually-hidden">Loading recordings…</span>
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="skeleton-row" style={{ animationDelay: `${i * 120}ms` }} />
+          ))}
+        </div>
       ) : articles.length === 0 ? (
-        <p>No recordings yet. Choose “New recording” to start dictating.</p>
+        <div
+          role="status"
+          style={{
+            border: '1px dashed var(--border)',
+            borderRadius: 'var(--radius)',
+            background: 'var(--card)',
+            padding: '48px 24px',
+            textAlign: 'center',
+            display: 'grid',
+            justifyItems: 'center',
+            gap: 12,
+          }}
+        >
+          <MicIcon size={32} />
+          <h2 style={{ margin: 0, fontSize: '1.1rem' }}>No recordings yet</h2>
+          <p style={{ margin: 0, color: 'var(--fg-subtle)', maxWidth: 420 }}>
+            Start dictating and your words appear as you speak. The audio is kept as
+            30-second clips so you can always check what you said.
+          </p>
+          <button className="cta" onClick={() => void handleNew()}>
+            New recording
+          </button>
+        </div>
       ) : (
         <ul role="list" style={{ listStyle: 'none', padding: 0, display: 'grid', gap: 8 }}>
           {articles.map((a) => (

@@ -199,6 +199,17 @@ dialog::backdrop {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.35; }
 }
+.skeleton-row {
+  height: 64px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--card);
+  animation: skeleton-pulse 1.4s ease-in-out infinite;
+}
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
 .timer { font-variant-numeric: tabular-nums; }
 .visually-hidden {
   position: absolute; width: 1px; height: 1px;
@@ -220,6 +231,7 @@ dialog::backdrop {
 
 @media (max-width: 900px) {
   .editor-layout { flex-direction: column; }
+  .view { padding-bottom: 96px; }
   .clip-panel {
     position: fixed;
     left: 0; right: 0; bottom: 0;

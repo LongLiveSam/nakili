@@ -59,7 +59,8 @@ describe('app shell', () => {
 
   it('navigates to record view on New recording (placeholder creates id)', async () => {
     render(<App />);
-    await userEvent.click(screen.getByRole('button', { name: /new recording/i }));
+    const buttons = await screen.findAllByRole('button', { name: /new recording/i });
+    await userEvent.click(buttons[0]);
     await waitFor(() => expect(useAppStore.getState().view).toBe('record'));
     expect(useAppStore.getState().activeArticleId).toBeTruthy();
   });
