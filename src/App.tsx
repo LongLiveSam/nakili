@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useAppStore } from './ui/appStore';
+import { useState, useEffect } from 'react';
+import { useAppStore, initHistorySync } from './ui/appStore';
 import { ToastHost } from './ui/Toast';
 import { UnsupportedBrowserNotice } from './ui/UnsupportedBrowserNotice';
 import { speechSupported } from './ui/speechSupport';
@@ -44,6 +44,8 @@ function AppShell({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   const view = useAppStore((s) => s.view);
+
+  useEffect(() => initHistorySync(), []);
 
   if (!speechSupported) {
     return (

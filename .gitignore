@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# UI/UX Pro Max skill assets (local tooling; design system is committed under design-system/)
+.opencode/

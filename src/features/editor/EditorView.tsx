@@ -8,6 +8,7 @@ import { ClipSidebar, type ClipRowData } from './ClipSidebar';
 import { ConfirmDialog } from '../library/ConfirmDialog';
 import { usePlaybackStore } from '../playback/playbackStore';
 import { ClipPlayerProvider } from '../playback/ClipPlayerProvider';
+import { ArrowLeftIcon } from '../../ui/icons';
 
 export default function EditorView() {
   const articleId = useAppStore((s) => s.activeArticleId)!;
@@ -49,7 +50,9 @@ export default function EditorView() {
         <div className="editor-main">
           <div className="view-header">
             <button aria-label="Back to recordings" onClick={() => navigate('home')}>
-              ← Recordings
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                <ArrowLeftIcon /> Recordings
+              </span>
             </button>
             <h1>{article.title}</h1>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -61,6 +64,7 @@ export default function EditorView() {
                 onClick={async () => {
                   try {
                     await exportTranscript(article.id);
+                    showToast('Transcript downloaded');
                   } catch {
                     showToast('Export failed');
                   }

@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { usePlaybackStore } from '../playback/playbackStore';
+import { PlayIcon, PauseIcon } from '../../ui/icons';
 
 export interface ClipRowData {
   index: number;
@@ -72,23 +73,26 @@ export function ClipSidebar({
             <li key={c.index} ref={isActive ? activeRef : undefined}>
               <button
                 aria-current={isActive ? 'true' : undefined}
+                className={isActive ? 'clip-row-active' : undefined}
                 aria-label={
                   `Clip ${c.index + 1}, ${fmt(c.startTimeSec)} to ${fmt(c.endTimeSec)}` +
+                  (isPlaying ? ', playing' : '') +
                   (isActive && approximate ? ', approximately matches cursor' : '')
                 }
                 style={{
                   width: '100%',
                   display: 'flex',
+                  alignItems: 'center',
                   justifyContent: 'space-between',
-                  borderColor: isActive ? 'var(--accent)' : undefined,
-                  borderWidth: isActive ? 2 : undefined,
+                  gap: 8,
                 }}
                 onClick={() => onTogglePlay(c.index)}
               >
                 <span>Clip {c.index + 1}</span>
-                <span style={{ color: 'var(--fg-subtle)' }}>
-                  {isActive && approximate ? '~ ' : ''}
-                  {isPlaying ? '⏸' : '▶'} {fmt(c.startTimeSec)}–{fmt(c.endTimeSec)}
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'var(--fg-subtle)' }}>
+                  {isActive && approximate && <span className="approx-chip">~</span>}
+                  {fmt(c.startTimeSec)}–{fmt(c.endTimeSec)}
+                  {isPlaying ? <PauseIcon /> : <PlayIcon />}
                 </span>
               </button>
               {isPlaying && onSeek && (

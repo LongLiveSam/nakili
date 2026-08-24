@@ -4,6 +4,7 @@ import { ConfirmDialog } from './ConfirmDialog';
 import { useAppStore } from '../../ui/appStore';
 import { useToastStore } from '../../ui/toastStore';
 import { exportTranscript, exportFullRecording } from '../../core/services/ExportService';
+import { MoreVerticalIcon } from '../../ui/icons';
 import type { Article } from '../../core/models';
 
 function formatDate(ms: number): string {
@@ -36,7 +37,7 @@ export default function LibraryView() {
     <main className="view">
       <div className="view-header">
         <h1>Recordings</h1>
-        <button className="primary" onClick={() => void handleNew()}>New recording</button>
+        <button className="cta" onClick={() => void handleNew()}>New recording</button>
       </div>
 
       {!loaded ? (
@@ -68,7 +69,7 @@ export default function LibraryView() {
                 aria-expanded={menuFor === a.id}
                 onClick={() => setMenuFor(menuFor === a.id ? null : a.id)}
               >
-                ⋮
+                <MoreVerticalIcon />
               </button>
               {menuFor === a.id && (
                 <div style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius)', display: 'grid' }}>
@@ -78,10 +79,10 @@ export default function LibraryView() {
                   <button onClick={async () => { setMenuFor(null); await duplicateArticle(a.id); }}>
                     Duplicate
                   </button>
-                  <button role="menuitem" onClick={async () => { setMenuFor(null); try { await exportTranscript(a.id); } catch { showToast('Export failed'); } }}>
+                  <button role="menuitem" onClick={async () => { setMenuFor(null); try { await exportTranscript(a.id); showToast('Transcript downloaded'); } catch { showToast('Export failed'); } }}>
                     Export text
                   </button>
-                  <button role="menuitem" onClick={async () => { setMenuFor(null); try { await exportFullRecording(a.id); } catch { showToast('Export failed'); } }}>
+                  <button role="menuitem" onClick={async () => { setMenuFor(null); try { await exportFullRecording(a.id); showToast('Audio downloaded'); } catch { showToast('Export failed'); } }}>
                     Export audio
                   </button>
                   <button className="danger" onClick={() => { setDeleting(a); setMenuFor(null); }}>

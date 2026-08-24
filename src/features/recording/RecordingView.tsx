@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useRecordingStore } from './recordingStore';
 import { useAppStore } from '../../ui/appStore';
+import { ArrowLeftIcon } from '../../ui/icons';
 
 function formatClock(sec: number): string {
   const m = Math.floor(sec / 60);
@@ -34,19 +35,29 @@ export default function RecordingView() {
       <div className="view-header">
         {status !== 'recording' && (
           <button aria-label="Back to recordings" onClick={() => navigate('home')}>
-            ← Recordings
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <ArrowLeftIcon /> Recordings
+            </span>
           </button>
         )}
-        <h1>
-          {status === 'recording' ? '● Recording · ' : 'Ready · '}
-          <time>{formatClock(elapsedSec)}</time>
+        <h1 style={{ display: 'inline-flex', alignItems: 'center', gap: 10, margin: 0 }}>
+          {status === 'recording' ? (
+            <>
+              <span className="rec-dot" aria-hidden="true" />
+              Recording · <time className="timer">{formatClock(elapsedSec)}</time>
+            </>
+          ) : (
+            <>
+              Ready · <time className="timer">{formatClock(elapsedSec)}</time>
+            </>
+          )}
         </h1>
         {status === 'recording' ? (
-          <button className="primary" onClick={() => void stopAndSave(articleId)}>
+          <button className="cta" onClick={() => void stopAndSave(articleId)}>
             Stop
           </button>
         ) : (
-          <button className="primary" onClick={() => void start()}>
+          <button className="cta" onClick={() => void start()}>
             Start recording
           </button>
         )}

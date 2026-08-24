@@ -1,12 +1,29 @@
+/*
+ * Dictation Scribe — design system (Flat Design)
+ * Generated with ui-ux-pro-max for "dictation / writing productivity tool".
+ * Source of truth: design-system/dictation-scribe/MASTER.md
+ * Rules honored: no gradients, no shadows, 150-200ms ease transitions,
+ * text contrast >= 4.5:1, visible focus, reduced-motion support.
+ */
 :root {
-  --bg: #ffffff;
-  --fg: #1f1f1f;
-  --fg-subtle: #5f6368;
-  --border: #dadce0;
-  --accent: #0b57d0;
-  --accent-fg: #ffffff;
-  --danger: #b3261e;
-  --radius: 4px;
+  --bg: #f0fdfa;                 /* background */
+  --fg: #134e4a;                 /* foreground */
+  --card: #ffffff;               /* card */
+  --fg-subtle: #475569;          /* muted foreground */
+  --muted: #e8f1f4;              /* muted surface */
+  --border: #99f6e4;             /* border */
+  --accent: #0d9488;             /* primary */
+  --accent-strong: #0f766e;      /* primary hover */
+  --accent-fg: #000000;          /* on primary */
+  --secondary: #14b8a6;
+  --cta: #ea580c;                /* accent/CTA */
+  --cta-strong: #c2410c;
+  --cta-fg: #000000;             /* on accent (large/bold button text) */
+  --danger: #dc2626;
+  --danger-fg: #ffffff;
+  --ring: #0d9488;
+  --radius: 8px;
+  --speed: 160ms ease;
 }
 
 * { box-sizing: border-box; }
@@ -16,43 +33,55 @@ html, body, #root { height: 100%; margin: 0; }
 body {
   background: var(--bg);
   color: var(--fg);
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   font-size: 16px;
   line-height: 1.5;
 }
 
 button {
   font: inherit;
+  font-weight: 500;
   min-height: 48px;
   padding: 0 16px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: var(--bg);
+  background: var(--card);
   color: var(--fg);
   cursor: pointer;
+  transition: background-color var(--speed), border-color var(--speed), color var(--speed);
 }
-button:hover { background: #f8f9fa; }
-button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button:hover { background: var(--muted); }
+button:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
 
 button.primary {
   background: var(--accent);
   border-color: var(--accent);
   color: var(--accent-fg);
 }
-button.primary:hover { background: #0a4cb8; }
+button.primary:hover { background: var(--accent-strong); border-color: var(--accent-strong); }
+
+/* The one call-to-action per screen uses the accent orange. */
+button.cta {
+  background: var(--cta);
+  border-color: var(--cta);
+  color: var(--cta-fg);
+  font-weight: 700;
+}
+button.cta:hover { background: var(--cta-strong); border-color: var(--cta-strong); }
 
 button.danger { color: var(--danger); }
+button.danger:hover { background: #fef2f2; }
 
 input[type="text"], textarea {
   font: inherit;
-  color: inherit;
+  color: var(--fg);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 8px;
-  background: var(--bg);
+  background: var(--card);
 }
 input[type="text"]:focus-visible, textarea:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--ring);
   outline-offset: -1px;
 }
 textarea { resize: none; }
@@ -69,15 +98,17 @@ textarea { resize: none; }
   gap: 16px;
   padding: 8px 16px;
   border-bottom: 1px solid var(--border);
+  background: var(--card);
 }
 .brand {
   border: none;
   background: none;
   font-size: 18px;
   font-weight: 700;
-  color: var(--fg);
+  color: var(--accent);
   padding: 4px 8px;
 }
+.brand:hover { background: none; color: var(--accent-strong); }
 .link-button {
   border: none;
   background: none;
@@ -96,15 +127,19 @@ textarea { resize: none; }
   border-top: 1px solid var(--border);
   color: var(--fg-subtle);
   font-size: 14px;
+  background: var(--card);
 }
 .app-footer a { color: var(--accent); }
+
 dialog {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 20px;
+  background: var(--card);
+  color: var(--fg);
 }
 dialog::backdrop {
-  background: rgba(0, 0, 0, 0.35);
+  background: rgba(19, 78, 74, 0.4);
 }
 
 .toast-host {
@@ -124,22 +159,61 @@ dialog::backdrop {
   border-radius: var(--radius);
 }
 
-.editor-layout { display: flex; gap: 24px; align-items: flex-start; }
+.editor-layout { display: flex; gap: 24px; align-items: flex-start; max-width: 1440px; margin: 0 auto; width: 100%; }
 .editor-main { flex: 1; min-width: 0; }
 .clip-sidebar {
   width: 280px; max-height: 80vh; overflow-y: auto;
   border: 1px solid var(--border); border-radius: var(--radius); padding: 8px;
+  background: var(--card);
 }
 .clip-sidebar h2 { font-size: 1rem; margin: 4px 8px 8px; }
 .clip-sidebar input[type="range"] {
   min-height: 48px;
   margin: 0;
+  accent-color: var(--accent);
 }
+.clip-row-active {
+  border-color: var(--accent) !important;
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+.approx-chip {
+  display: inline-block;
+  border: 1px solid var(--cta);
+  color: var(--cta-strong);
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 0 6px;
+  margin-right: 6px;
+  line-height: 1.6;
+}
+.rec-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--danger);
+  animation: rec-pulse 1.2s ease-in-out infinite;
+}
+@keyframes rec-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+.timer { font-variant-numeric: tabular-nums; }
 .visually-hidden {
   position: absolute; width: 1px; height: 1px;
   margin: -1px; padding: 0; overflow: hidden;
   clip: rect(0 0 0 0); white-space: nowrap; border: 0;
 }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 @media (min-width: 901px) {
   .clip-panel-toggle { display: none; }
 }
@@ -152,7 +226,7 @@ dialog::backdrop {
     transform: translateY(100%);
     visibility: hidden;
     transition: transform 0.2s ease-out, visibility 0s 0.2s;
-    background: var(--bg);
+    background: var(--card);
     border-top: 1px solid var(--border);
     z-index: 50;
   }
