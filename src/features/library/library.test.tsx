@@ -3,9 +3,16 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, beforeEach } from 'vitest';
 import LibraryView from './LibraryView';
-import { useLibraryStore } from './libraryStore';
+import { useLibraryStore, formatDuration } from './libraryStore';
 import { db } from '../../core/db/db';
-import { putArticle } from '../../core/db/repositories';
+import {
+  putArticle,
+  putSegments,
+  saveSessionAudio,
+  getChunks,
+  getSegments,
+  getAudioBlob,
+} from '../../core/db/repositories';
 import { useAppStore } from '../../ui/appStore';
 
 // jsdom does not implement <dialog>.showModal; minimal stub (test-only).
@@ -79,5 +86,36 @@ describe('library', () => {
     await userEvent.click(await screen.findByRole('button', { name: /actions for Original/i }));
     await userEvent.click(screen.getByRole('button', { name: /^duplicate$/i }));
     expect(await screen.findByText(/copy of original/i)).toBeInTheDocument();
+  });
+
+  it('duplicate re-points copied chunks to fresh blobs and copies segments', async () => {
+    await putArticle({
+      id: 'src', title: 'Src', createdAt: 0, updatedAt: 0,
+      durationSec: 60, transcriptText: 'hello world',
+    });
+    await saveSessionAudio('src', [new Blob(['a']), new Blob(['bb'])]);
+    await putSegments([
+      { id: 'seg-1', articleId: 'src', startTimeSec: 0, endTimeSec: 1, startCharOffset: 0, endCharOffset: 4, text: 'hello', audioChunkIndex: 0, approximate: false },
+      { id: 'seg-2', articleId: 'src', startTimeSec: 1, endTimeSec: 2, startCharOffset: 6, endCharOffset: 10, text: 'world', audioChunkIndex: 1, approximate: false },
+    ]);
+    const srcKeys = (await getChunks('src')).map((c) => c.blobKey);
+
+    const newId = await useLibraryStore.getState().duplicateArticle('src');
+
+    const copyChunks = await getChunks(newId);
+    expect(copyChunks.length).toBe(2);
+    expect(copyChunks.map((c) => c.blobKey).sort()).not.toEqual([...srcKeys].sort());
+    const texts = await Promise.all(copyChunks.map(async (c) => (await getAudioBlob(c.blobKey))!.text()));
+    expect(texts).toEqual(['a', 'bb']);
+    expect((await getSegments(newId)).length).toBe(2);
+  });
+});
+
+describe('formatDuration', () => {
+  it('rounds total seconds before decomposing into m:ss', () => {
+    expect(formatDuration(59.7)).toBe('1:00');
+    expect(formatDuration(119.75)).toBe('2:00');
+    expect(formatDuration(125)).toBe('2:05');
+    expect(formatDuration(0.2)).toBe('0:00');
   });
 });

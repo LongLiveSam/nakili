@@ -13,8 +13,9 @@ interface LibraryState {
 }
 
 export function formatDuration(totalSec: number): string {
-  const m = Math.floor(totalSec / 60);
-  const s = Math.round(totalSec % 60);
+  const total = Math.round(totalSec);
+  const m = Math.floor(total / 60);
+  const s = total % 60;
   return `${m}:${String(s).padStart(2, '0')}`;
 }
 
