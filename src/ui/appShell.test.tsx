@@ -1,7 +1,7 @@
 import 'fake-indexeddb/auto';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import App from '../App';
 import { useToastStore } from './toastStore';
 import { useAppStore } from './appStore';
@@ -47,14 +47,17 @@ describe('app shell', () => {
     vi.doUnmock('./speechSupport');
   });
 
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('renders and auto-dismisses toasts after 4 s', async () => {
     vi.useFakeTimers();
     render(<App />);
     useToastStore.getState().showToast('Saved');
-    expect(screen.getAllByRole('status')[0]).toHaveTextContent('Saved');
+    expect(document.querySelector('.toast')).toHaveTextContent('Saved');
     vi.advanceTimersByTime(4100);
-    await waitFor(() => expect(screen.queryByRole('status')).not.toBeInTheDocument());
-    vi.useRealTimers();
+    await waitFor(() => expect(document.querySelector('.toast')).toBeNull());
   });
 
   it('navigates to record view on New recording (placeholder creates id)', async () => {
