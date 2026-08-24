@@ -27,7 +27,7 @@ describe('app shell', () => {
 
   it('shows site header with brand, Recordings link and Help', () => {
     render(<App />);
-    expect(screen.getByRole('button', { name: 'Dictation Scribe home' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Nakili home' })).toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: 'Help' }).length).toBeGreaterThan(0);
   });
 

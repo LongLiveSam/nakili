@@ -1,4 +1,4 @@
-# Dictation Scribe
+# Nakili
 
 Private, local-first dictation for long-form writing. Speak, watch words appear
 in real time, edit the transcript like a document — with the original audio

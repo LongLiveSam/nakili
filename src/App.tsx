@@ -16,8 +16,8 @@ function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="app-frame">
       <header className="app-header">
-        <button className="brand" onClick={() => navigate('home')} aria-label="Dictation Scribe home">
-          Dictation Scribe
+        <button className="brand" onClick={() => navigate('home')} aria-label="Nakili home">
+          Nakili
         </button>
         <nav style={{ display: 'flex', gap: 8, alignItems: 'center' }} aria-label="Site">
           <button onClick={() => navigate('home')}>Recordings</button>
@@ -28,7 +28,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
       {children}
 
       <footer className="app-footer">
-        <span>Dictation Scribe — private, local-first dictation. Nothing leaves your browser.</span>
+        <span>Nakili — private, local-first dictation. Nothing leaves your browser.</span>
         <span>
           <a href="mailto:culturedrabbit@gmail.com">Contact</a>
           {' · '}

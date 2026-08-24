@@ -6,7 +6,7 @@
 
 ---
 
-**Project:** Dictation Scribe
+**Project:** Nakili
 **Generated:** 2026-08-24 20:47:15
 **Category:** Productivity Tool
 

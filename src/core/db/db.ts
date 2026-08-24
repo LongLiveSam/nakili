@@ -9,6 +9,7 @@ export class ScribeDB extends Dexie {
   transcriptSegments!: Table<TranscriptSegment, string>;
   audioFiles!: Table<AudioFileRow, string>;
 
+  // NOTE: keep the legacy DB name — renaming would orphan existing users' data.
   constructor(name = 'dictation-scribe') {
     super(name);
     this.version(1).stores({
