@@ -7,8 +7,21 @@ interface PlaybackState {
   currentTimeSec: number;
   durationSec: number;
   error: string | null;
+  loop: boolean;
+  rate: number;
+  autoNext: boolean;
+  setLoop: (v: boolean) => void;
+  setRate: (r: number) => void;
   toggle: (index: number) => Promise<void>;
   seek: (fraction: number) => void;
+}
+
+function storedFlag(key: string): boolean {
+  try {
+    return localStorage.getItem(key) === 'on';
+  } catch {
+    return false;
+  }
 }
 
 let audioEl: HTMLAudioElement | null = null;
@@ -49,6 +62,11 @@ function ensureAudio(): HTMLAudioElement {
     prefetched = null;
   };
   audioEl.addEventListener('ended', () => {
+    const st = usePlaybackStore.getState();
+    if (st.autoNext && st.playingIndex !== null) {
+      void st.toggle(st.playingIndex + 1);
+      return;
+    }
     release();
     usePlaybackStore.setState({ playingIndex: null });
   });
@@ -72,6 +90,19 @@ export const usePlaybackStore = create<PlaybackState>((set, get) => ({
   currentTimeSec: 0,
   durationSec: 0,
   error: null,
+  loop: false,
+  rate: 1,
+  autoNext: storedFlag('nakili-autonext'),
+
+  setLoop: (v) => {
+    if (audioEl) audioEl.loop = v;
+    set({ loop: v });
+  },
+
+  setRate: (r) => {
+    if (audioEl) audioEl.playbackRate = r;
+    set({ rate: r });
+  },
 
   toggle: async (index) => {
     const el = ensureAudio();
@@ -94,7 +125,12 @@ export const usePlaybackStore = create<PlaybackState>((set, get) => ({
 
     const chunks = await getChunks(articleId);
     const chunk = chunks.find((c) => c.index === index);
-    if (!chunk) return;
+    if (!chunk) {
+      // Auto-advance ran past the final clip.
+      revokeCurrent();
+      set({ playingIndex: null });
+      return;
+    }
 
     if (!url) {
       const blob = await getAudioBlob(chunk.blobKey);
@@ -118,6 +154,8 @@ export const usePlaybackStore = create<PlaybackState>((set, get) => ({
       currentTimeSec: 0,
       durationSec: chunk.durationSec || el.duration || 0,
     });
+    el.loop = get().loop;
+    el.playbackRate = get().rate;
 
     try {
       await el.play();

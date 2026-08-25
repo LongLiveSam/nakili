@@ -70,3 +70,31 @@ export async function getChunks(articleId: string): Promise<AudioChunk[]> {
     .toArray();
   return rows.sort((a, b) => a.index - b.index);
 }
+
+/** Delete one clip's audio; segments that mapped to it become approximate. */
+export async function deleteClip(articleId: string, index: number): Promise<void> {
+  await db.transaction('rw', db.audioChunks, db.audioFiles, db.transcriptSegments, async () => {
+    const chunk = await db.audioChunks
+      .where('[articleId+index]')
+      .between([articleId, index], [articleId, index])
+      .first();
+    if (!chunk) return;
+    const segs = await db.transcriptSegments.where('articleId').equals(articleId).toArray();
+    await Promise.all(
+      segs
+        .filter((s) => s.audioChunkIndex === index)
+        .map((s) => db.transcriptSegments.put({ ...s, approximate: true })),
+    );
+    await db.audioChunks.delete(chunk.id);
+    await db.audioFiles.delete(chunk.blobKey);
+  });
+}
+
+export async function storageUsage(): Promise<{ usage: number; quota: number }> {
+  try {
+    const est = await navigator.storage?.estimate?.();
+    return { usage: est?.usage ?? 0, quota: est?.quota ?? 0 };
+  } catch {
+    return { usage: 0, quota: 0 };
+  }
+}

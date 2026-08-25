@@ -18,9 +18,23 @@ export function HelpDialog({ open, onClose }: Props) {
   return (
     <dialog ref={ref} onClose={onClose} aria-label="Help">
       <div style={{ maxWidth: 560 }}>
-        <h2 style={{ marginTop: 0 }}>Help</h2>
+      <h2 style={{ marginTop: 0 }}>Help</h2>
 
-        <h3>How it works</h3>
+      <h3>Shortcuts</h3>
+      <p>
+        <code>Ctrl+Shift+D</code> start/stop dictation ·{' '}
+        <code>Ctrl+Enter</code> paragraph break at cursor ·{' '}
+        <code>Esc</code> close dialogs
+      </p>
+
+      <h3>Voice commands</h3>
+      <p>
+        While dictating, say “period”, “comma”, “question mark”, “exclamation
+        mark”, “new line”, or “new paragraph” and Nakili writes the punctuation
+        or break for you.
+      </p>
+
+      <h3>How it works</h3>
         <p>
           Choose <strong>New recording</strong>, speak, and your words appear as you talk.
           Press <strong>Stop</strong> to save. Your transcript is always editable — click

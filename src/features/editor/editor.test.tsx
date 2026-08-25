@@ -58,7 +58,7 @@ describe('editor', () => {
     const ta = await screen.findByRole('textbox', { name: /transcript/i });
     fireEvent.select(ta, { target: { selectionStart: 14 } });
     await waitFor(() => expect(useEditorStore.getState().activeClipIndex).toBe(1));
-    const active = await screen.findByRole('button', { name: /clip 2/i });
+    const active = await screen.findByRole('button', { name: /^clip 2/i });
     expect(active).toHaveAttribute('aria-current', 'true');
   });
 

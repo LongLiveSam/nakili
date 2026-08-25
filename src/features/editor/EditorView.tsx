@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useEditorStore } from './editorStore';
 import { useAppStore } from '../../ui/appStore';
 import { exportTranscript } from '../../core/services/ExportService';
-import { getChunks, putArticle } from '../../core/db/repositories';
+import { getChunks, putArticle, deleteClip } from '../../core/db/repositories';
 import { ClipSidebar, type ClipRowData } from './ClipSidebar';
 import { ConfirmDialog } from '../library/ConfirmDialog';
 import { usePlaybackStore } from '../playback/playbackStore';
@@ -49,6 +49,36 @@ export default function EditorView() {
     if (!ta) return;
     setCursor(ta.selectionStart ?? 0);
     if (useEditorStore.getState().activeClipIndex !== null) setPanelOpen(true);
+  };
+
+  // Ctrl+Enter: paragraph break at the cursor, mapped through the normal edit pipeline.
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.ctrlKey && e.key === 'Enter') {
+      e.preventDefault();
+      const ta = e.currentTarget;
+      const pos = ta.selectionStart ?? 0;
+      const v = ta.value;
+      const next = `${v.slice(0, pos)}\n\n${v.slice(pos)}`;
+      setText(next);
+      requestAnimationFrame(() => {
+        ta.selectionStart = ta.selectionEnd = pos + 2;
+        syncCursor();
+      });
+    }
+  };
+
+  const refreshClips = () => {
+    void getChunks(articleId).then((rows) =>
+      setChunks(rows.map(({ index, startTimeSec, endTimeSec }) => ({ index, startTimeSec, endTimeSec }))),
+    );
+  };
+
+  const handleDeleteClip = (index: number) => {
+    void (async () => {
+      await deleteClip(articleId, index);
+      useEditorStore.setState({ approximate: true });
+      refreshClips();
+    })();
   };
 
   const handleShare = async () => {
@@ -104,10 +134,10 @@ export default function EditorView() {
             onClick={syncCursor}
             onKeyUp={syncCursor}
             onSelect={syncCursor}
+            onKeyDown={handleKeyDown}
             spellCheck
             style={{ width: '100%', height: '70vh', fontSize: 18, lineHeight: 1.6 }}
-          />
-        </div>
+          />        </div>
 
         <ClipSidebar
           chunks={chunks}
@@ -117,6 +147,7 @@ export default function EditorView() {
           panelOpen={panelOpen}
           onTogglePlay={(index) => void toggle(index)}
           onSeek={seek}
+          onDeleteClip={handleDeleteClip}
         />
 
         <button

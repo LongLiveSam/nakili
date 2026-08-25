@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { exportAllBackup } from '../core/services/ExportService';
+import { storageUsage } from '../core/db/repositories';
+import { db } from '../core/db/db';
 
 interface Props {
   open: boolean;
@@ -35,6 +37,10 @@ export function SettingsDialog({ open, onClose }: Props) {
   const ref = useRef<HTMLDialogElement>(null);
   const [text, setText] = useState(loadStored('nakili-vocab'));
   const [lang, setLang] = useState(loadStored('nakili-lang', 'en-US'));
+  const [micId, setMicId] = useState(loadStored('nakili-mic'));
+  const [mics, setMics] = useState<MediaDeviceInfo[]>([]);
+  const [usage, setUsage] = useState<{ usage: number; quota: number } | null>(null);
+  const [clearArmed, setClearArmed] = useState(false);
   const [saved, setSaved] = useState(false);
   const [backupStatus, setBackupStatus] = useState<string | null>(null);
 
@@ -44,8 +50,15 @@ export function SettingsDialog({ open, onClose }: Props) {
     if (open && !el.open) {
       setText(loadStored('nakili-vocab'));
       setLang(loadStored('nakili-lang', 'en-US'));
+      setMicId(loadStored('nakili-mic'));
       setSaved(false);
       setBackupStatus(null);
+      setClearArmed(false);
+      void storageUsage().then(setUsage);
+      void navigator.mediaDevices
+        ?.enumerateDevices()
+        .then((devs) => setMics(devs.filter((d) => d.kind === 'audioinput')))
+        .catch(() => {});
       el.showModal();
     }
     if (!open && el.open) el.close();
@@ -54,8 +67,22 @@ export function SettingsDialog({ open, onClose }: Props) {
   const save = () => {
     saveStored('nakili-vocab', text);
     saveStored('nakili-lang', lang);
+    if (micId) saveStored('nakili-mic', micId);
+    else saveStored('nakili-mic', '');
     setSaved(true);
     setTimeout(() => onClose(), 600);
+  };
+
+  const clearAll = async () => {
+    await db.delete();
+    try {
+      Object.keys(localStorage)
+        .filter((k) => k.startsWith('nakili-'))
+        .forEach((k) => localStorage.removeItem(k));
+    } catch {
+      /* ignore */
+    }
+    location.reload();
   };
 
   const runBackup = async () => {
@@ -108,6 +135,34 @@ export function SettingsDialog({ open, onClose }: Props) {
         placeholder={'Kubernetes\nSchwarzschild\nNakili'}
       />
 
+      <h3>Microphone</h3>
+      <label className="visually-hidden" htmlFor="mic">Input device</label>
+      <select
+        id="mic"
+        value={micId}
+        onChange={(e) => setMicId(e.target.value)}
+        style={{
+          font: 'inherit',
+          background: 'var(--surface)',
+          color: 'var(--text-primary)',
+          border: '1px solid var(--border-visible)',
+          borderRadius: 8,
+          minHeight: 44,
+          padding: '0 12px',
+          width: '100%',
+        }}
+      >
+        <option value="">System default</option>
+        {mics.map((m, i) => (
+          <option key={m.deviceId || i} value={m.deviceId}>
+            {m.label || `Microphone ${i + 1}`}
+          </option>
+        ))}
+      </select>
+      <p style={{ color: 'var(--text-disabled)', fontSize: 12 }}>
+        Applies to the next recording.
+      </p>
+
       <h3>Data safety</h3>
       <p>
         Recordings live only in this browser and can be evicted under storage pressure.
@@ -120,6 +175,29 @@ export function SettingsDialog({ open, onClose }: Props) {
           {backupStatus}
         </span>
       )}
+      {usage && (
+        <p style={{ color: 'var(--text-secondary)', fontSize: 12 }}>
+          Storage used: {(usage.usage / (1024 * 1024)).toFixed(1)} MB
+          {usage.quota > 0 && ` of ~${(usage.quota / (1024 * 1024 * 1024)).toFixed(1)} GB`}
+        </p>
+      )}
+      <div style={{ marginTop: 12 }}>
+        <button
+          className={clearArmed ? 'danger' : 'ghost'}
+          onClick={() => {
+            if (clearArmed) void clearAll();
+            else setClearArmed(true);
+          }}
+          onBlur={() => setClearArmed(false)}
+        >
+          {clearArmed ? 'Confirm: erase everything' : 'Clear all data'}
+        </button>
+        {clearArmed && (
+          <span className="status-line error" style={{ marginLeft: 12 }}>
+            This permanently deletes every recording.
+          </span>
+        )}
+      </div>
 
       <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 16 }}>
         <button onClick={onClose}>Cancel</button>

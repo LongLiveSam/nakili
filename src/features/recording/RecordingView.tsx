@@ -17,6 +17,7 @@ export default function RecordingView() {
   const finals = useRecordingStore((s) => s.finals);
   const errorMessage = useRecordingStore((s) => s.errorMessage);
   const start = useRecordingStore((s) => s.start);
+  const restartText = useRecordingStore((s) => s.restartText);
   const stopAndSave = useRecordingStore((s) => s.stopAndSave);
   const articleId = useAppStore((s) => s.activeArticleId)!;
   const navigate = useAppStore((s) => s.navigate);
@@ -103,6 +104,11 @@ export default function RecordingView() {
 
       {errorMessage && (
         <p role="alert" className="status-line error" style={{ textAlign: 'center' }}>{errorMessage}</p>
+      )}
+      {errorMessage && status === 'recording' && (
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 'var(--space-sm)' }}>
+          <button onClick={() => restartText()}>Retry live text</button>
+        </div>
       )}
       {recorderNotice && (
         <p className="status-line" style={{ textAlign: 'center' }}>{recorderNotice}</p>

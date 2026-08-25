@@ -1,17 +1,33 @@
 import { create } from 'zustand';
 import { SpeechService } from '../../core/services/SpeechService';
 import { RecorderService } from '../../core/services/RecorderService';
-import { buildTranscript, type FinalResult } from '../../core/services/MappingService';
+import {
+  buildTranscript, type FinalResult,
+} from '../../core/services/MappingService';
+import { adjustSegmentsAfterEdit } from '../../core/services/MappingService';
+import { applyVoiceCommands, planParagraphBreaks } from '../../core/services/formatting';
 import {
   saveSessionAudio, putArticle, getArticle, putSegments,
 } from '../../core/db/repositories';
 import { useAppStore } from '../../ui/appStore';
+import type { TranscriptSegment } from '../../core/models';
+
+function featureOn(key: string): boolean {
+  try {
+    return localStorage.getItem(key) !== 'off';
+  } catch {
+    return true;
+  }
+}
 
 let speech: SpeechService | null = null;
 let recorder: RecorderService | null = null;
 let ticker: ReturnType<typeof setInterval> | null = null;
 let startedAtMs = 0;
 let currentDraftId: string | null = null;
+let silenceTicks = 0;
+let lastBreakSec = -30;
+const boundariesSec: number[] = [];
 
 /** Test seam: inject fakes instead of constructing real browser services. */
 export function __setServicesForTest(s: SpeechService, r: RecorderService): void {
@@ -50,6 +66,7 @@ interface RecordingState {
   errorMessage: string | null;
   recorderNotice: string | null;
   start: () => Promise<void>;
+  restartText: () => void;
   stopAndSave: (articleId: string) => Promise<void>;
 }
 
@@ -123,12 +140,20 @@ export const useRecordingStore = create<RecordingState>((set, get) => ({
       return;
     }
     speech!.onInterim = (t) => set({ interimText: t });
-    speech!.onFinal = (text, elapsedSec) =>
+    const voiceCmds = featureOn('nakili-voice-cmds');
+    speech!.onFinal = (rawText, elapsedSec) =>
       set((s) => {
-        const finals = [...s.finals, { text, startTimeSec: elapsedSec, endTimeSec: elapsedSec }];
+        const text = voiceCmds ? applyVoiceCommands(rawText).text : rawText;
+        if (!text) return { interimText: '' } as Partial<RecordingState>;
+        const last = s.finals[s.finals.length - 1];
+        // Merge into the previous final when a command collapsed it to punctuation.
+        const finals =
+          last && /^[,.!?]$/.test(text)
+            ? [...s.finals.slice(0, -1), { ...last, text: last.text + text }]
+            : [...s.finals, { text, startTimeSec: elapsedSec, endTimeSec: elapsedSec }];
         // Crash-recovery point: persist every confirmed phrase.
         if (currentDraftId) saveDraft(currentDraftId, finals);
-        return { finals, interimText: '' };
+        return { finals, interimText: '' } as Partial<RecordingState>;
       });
     speech!.onError = (err, fatal) => {
       if (fatal) {
@@ -141,10 +166,39 @@ export const useRecordingStore = create<RecordingState>((set, get) => ({
     recorder!.start();
     speech!.start();
     startedAtMs = Date.now();
+    // Prosody: watch the level meter feed for ~0.9 s silences → paragraph hints.
+    silenceTicks = 0;
+    lastBreakSec = -30;
     ticker = setInterval(() => {
-      set((s) => ({ elapsedSec: s.elapsedSec + 0.25 }));
+      set((s) => {
+        const elapsedSec = s.elapsedSec + 0.25;
+        const an = getActiveAnalyser();
+        if (an) {
+          const data = new Uint8Array(an.frequencyBinCount);
+          an.getByteFrequencyData(data);
+          let sum = 0;
+          for (let i = 0; i < data.length; i++) sum += data[i];
+          const level = sum / data.length;
+          if (level < 10) {
+            silenceTicks++;
+            if (silenceTicks * 0.25 >= 0.9 && elapsedSec - lastBreakSec >= 25) {
+              boundariesSec.push(elapsedSec);
+              lastBreakSec = elapsedSec;
+              silenceTicks = 0;
+            }
+          } else {
+            silenceTicks = 0;
+          }
+        }
+        return { elapsedSec };
+      });
     }, 250);
     set({ status: 'recording' });
+  },
+
+  restartText: () => {
+    if (get().status !== 'recording') return;
+    speech?.start();
   },
 
   stopAndSave: async (articleId) => {
@@ -155,7 +209,24 @@ export const useRecordingStore = create<RecordingState>((set, get) => ({
     const { finals, elapsedSec } = get();
     const durationSec = startedAtMs > 0 ? (Date.now() - startedAtMs) / 1000 : elapsedSec;
     startedAtMs = 0;
-    const { text, segments } = buildTranscript(finals);
+    const built = buildTranscript(finals);
+    let text = built.text;
+    let segments: TranscriptSegment[] = built.segments.map((s) => ({
+      ...s,
+      id: '',
+      articleId,
+    }));
+
+    // Layer 2: prosody-detected silences become paragraph breaks.
+    if (featureOn('nakili-autopara') && boundariesSec.length > 0 && segments.length > 0) {
+      const { insertOffsets } = planParagraphBreaks(text, segments, boundariesSec);
+      for (const off of [...insertOffsets].sort((a, b) => b - a)) {
+        const nextText = `${text.slice(0, off)}\n\n${text.slice(off)}`;
+        segments = adjustSegmentsAfterEdit(segments, text, nextText);
+        text = nextText;
+      }
+    }
+    boundariesSec.length = 0;
 
     if (chunks.length > 0) {
       await saveSessionAudio(articleId, chunks.map((c) => c.blob));

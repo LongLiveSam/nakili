@@ -54,7 +54,7 @@ describe('recording view', () => {
 
     speech.onFinal!('hello world', 2);
     speech.onInterim!('an');
-    await waitFor(() => expect(screen.getByText('hello world')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Hello world')).toBeInTheDocument());
   });
 
   it('stop saves article, ordered chunks, segments, then opens editor', async () => {
@@ -69,7 +69,7 @@ describe('recording view', () => {
 
     await waitFor(() => expect(useAppStore.getState().view).toBe('editor'));
     const article = await db.articles.get('a1');
-    expect(article!.transcriptText).toBe('hello world more words');
+    expect(article!.transcriptText).toBe('Hello world More words');
     expect(article!.durationSec).toBeGreaterThan(0);
 
     const segs = (await db.transcriptSegments.where('articleId').equals('a1').toArray())

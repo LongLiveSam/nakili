@@ -26,12 +26,17 @@ async function shareOrDownload(blob: Blob, filename: string): Promise<void> {
   // unambiguous on every platform.
   downloadBlob(blob, filename);
 }
-
-export async function exportTranscript(articleId: string): Promise<void> {  const { getArticle } = await import('../db/repositories');
+export async function exportTranscript(articleId: string, format: 'txt' | 'md' = 'txt'): Promise<void> {
+  const { getArticle } = await import('../db/repositories');
   const article = await getArticle(articleId);
   if (!article) throw new Error(`article not found: ${articleId}`);
-  const blob = new Blob([article.transcriptText], { type: 'text/plain;charset=utf-8' });
-  await shareOrDownload(blob, `${slugify(article.title)}.txt`);
+  const body =
+    format === 'md'
+      ? `# ${article.title}\n\n${article.transcriptText.replace(/\n{3,}/g, '\n\n')}\n`
+      : article.transcriptText;
+  const type = format === 'md' ? 'text/markdown;charset=utf-8' : 'text/plain;charset=utf-8';
+  const blob = new Blob([body], { type });
+  await shareOrDownload(blob, `${slugify(article.title)}.${format}`);
 }
 
 export type AudioExportFormat = 'mp3' | 'wav' | 'webm';

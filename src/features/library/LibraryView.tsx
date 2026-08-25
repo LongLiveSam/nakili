@@ -3,7 +3,7 @@ import { useLibraryStore, formatDuration } from './libraryStore';
 import { ConfirmDialog } from './ConfirmDialog';
 import { useAppStore } from '../../ui/appStore';
 import { exportTranscript, exportFullRecording } from '../../core/services/ExportService';
-import { MoreVerticalIcon } from '../../ui/icons';
+import { MoreVerticalIcon, SearchIcon } from '../../ui/icons';
 import type { Article } from '../../core/models';
 
 function formatDate(ms: number): string {
@@ -20,6 +20,7 @@ export default function LibraryView() {
   const deleteArticle = useLibraryStore((s) => s.deleteArticle);
   const navigate = useAppStore((s) => s.navigate);
   const [status, setStatus] = useState<string | null>(null);
+  const [query, setQuery] = useState('');
   const [menuFor, setMenuFor] = useState<string | null>(null);
   const [renaming, setRenaming] = useState<Article | null>(null);
   const [renameText, setRenameText] = useState('');
@@ -51,6 +52,21 @@ export default function LibraryView() {
         </p>
       )}
 
+      {loaded && articles.length > 0 && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+          <SearchIcon />
+          <label className="visually-hidden" htmlFor="library-search">Search recordings</label>
+          <input
+            id="library-search"
+            type="text"
+            placeholder="Search title or transcript…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            style={{ flex: 1 }}
+          />
+        </div>
+      )}
+
       {!loaded ? (
         <p className="label" aria-busy="true" aria-live="polite">[LOADING RECORDINGS…]</p>
       ) : articles.length === 0 ? (
@@ -62,7 +78,16 @@ export default function LibraryView() {
         </div>
       ) : (
         <ul role="list" style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: 0 }}>
-          {articles.map((a) => (
+          {articles
+            .filter((a) => {
+              if (!query.trim()) return true;
+              const q = query.trim().toLowerCase();
+              return (
+                a.title.toLowerCase().includes(q) ||
+                a.transcriptText.toLowerCase().includes(q)
+              );
+            })
+            .map((a) => (
             <li
               key={a.id}
               style={{
@@ -108,6 +133,9 @@ export default function LibraryView() {
                   </button>
                   <button onClick={async () => { setMenuFor(null); try { await exportTranscript(a.id); setStatus('[DOWNLOADED TRANSCRIPT]'); } catch { setStatus('[ERROR: EXPORT FAILED]'); } }}>
                     Export text
+                  </button>
+                  <button onClick={async () => { setMenuFor(null); try { await exportTranscript(a.id, 'md'); setStatus('[DOWNLOADED MARKDOWN]'); } catch { setStatus('[ERROR: EXPORT FAILED]'); } }}>
+                    Export Markdown
                   </button>
                   <button onClick={async () => { setMenuFor(null); try { await exportFullRecording(a.id, 'mp3'); setStatus('[DOWNLOADED AUDIO · MP3]'); } catch { setStatus('[ERROR: EXPORT FAILED]'); } }}>
                     Export audio · MP3

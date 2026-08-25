@@ -1,6 +1,6 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { usePlaybackStore } from '../playback/playbackStore';
-import { PlayIcon, PauseIcon } from '../../ui/icons';
+import { PlayIcon, PauseIcon, RepeatIcon } from '../../ui/icons';
 
 export interface ClipRowData {
   index: number;
@@ -17,6 +17,7 @@ interface Props {
   panelOpen?: boolean;
   onTogglePlay: (index: number) => void;
   onSeek?: (fraction: number) => void;
+  onDeleteClip?: (index: number) => void;
 }
 
 function fmt(sec: number): string {
@@ -60,10 +61,15 @@ function SeekSlider({
 }
 
 export function ClipSidebar({
-  chunks, activeClipIndex, approximate, playingIndex, progressFraction, panelOpen, onTogglePlay, onSeek,
+  chunks, activeClipIndex, approximate, playingIndex, progressFraction, panelOpen, onTogglePlay, onSeek, onDeleteClip,
 }: Props) {
   const activeRef = useRef<HTMLLIElement>(null);
   const error = usePlaybackStore((s) => s.error);
+  const loop = usePlaybackStore((s) => s.loop);
+  const setLoop = usePlaybackStore((s) => s.setLoop);
+  const rate = usePlaybackStore((s) => s.rate);
+  const setRate = usePlaybackStore((s) => s.setRate);
+  const [armedDelete, setArmedDelete] = useState<number | null>(null);
 
   useEffect(() => {
     activeRef.current?.scrollIntoView?.({ block: 'nearest' });
@@ -87,25 +93,79 @@ export function ClipSidebar({
           const isPlaying = c.index === playingIndex;
           return (
             <li key={c.index} ref={isActive ? activeRef : undefined}>
-              <button
-                aria-current={isActive ? 'true' : undefined}
-                className={`clip-row${isActive ? ' clip-row-active' : ''}`}
-                aria-label={
-                  `Clip ${c.index + 1}, ${fmt(c.startTimeSec)} to ${fmt(c.endTimeSec)}` +
-                  (isPlaying ? ', playing' : '') +
-                  (isActive && approximate ? ', approximately matches cursor' : '')
-                }
-                onClick={() => onTogglePlay(c.index)}
-              >
-                <span>Clip {c.index + 1}</span>
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                  {isActive && approximate && <span className="approx-chip">~</span>}
-                  <span className="clip-time">{fmt(c.startTimeSec)}–{fmt(c.endTimeSec)}</span>
-                  {isPlaying ? <PauseIcon /> : <PlayIcon />}
-                </span>
-              </button>
-              {isPlaying && onSeek && (
-                <SeekSlider index={c.index} fraction={progressFraction} onSeek={onSeek} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <button
+                  aria-current={isActive ? 'true' : undefined}
+                  className={`clip-row${isActive ? ' clip-row-active' : ''}`}
+                  aria-label={
+                    `Clip ${c.index + 1}, ${fmt(c.startTimeSec)} to ${fmt(c.endTimeSec)}` +
+                    (isPlaying ? ', playing' : '') +
+                    (isActive && approximate ? ', approximately matches cursor' : '')
+                  }
+                  onClick={() => onTogglePlay(c.index)}
+                >
+                  <span>Clip {c.index + 1}</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                    {isActive && approximate && <span className="approx-chip">~</span>}
+                    <span className="clip-time">{fmt(c.startTimeSec)}–{fmt(c.endTimeSec)}</span>
+                    {isPlaying ? <PauseIcon /> : <PlayIcon />}
+                  </span>
+                </button>
+                {onDeleteClip && (
+                  <button
+                    className={armedDelete === c.index ? 'danger' : 'ghost'}
+                    aria-label={
+                      armedDelete === c.index
+                        ? `Confirm delete clip ${c.index + 1}`
+                        : `Delete clip ${c.index + 1}`
+                    }
+                    onClick={() => {
+                      if (armedDelete === c.index) {
+                        onDeleteClip(c.index);
+                        setArmedDelete(null);
+                      } else {
+                        setArmedDelete(c.index);
+                      }
+                    }}
+                    onBlur={() => setArmedDelete(null)}
+                    style={{ minWidth: 44, padding: '0 10px' }}
+                  >
+                    {armedDelete === c.index ? 'Sure?' : '✕'}
+                  </button>
+                )}
+              </div>
+              {isPlaying && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 0' }}>
+                  {onSeek && <SeekSlider index={c.index} fraction={progressFraction} onSeek={onSeek} />}
+                  <button
+                    aria-pressed={loop}
+                    aria-label={`Loop clip ${c.index + 1}`}
+                    onClick={() => setLoop(!loop)}
+                    style={{ minWidth: 44, padding: '0 10px', color: loop ? 'var(--text-display)' : undefined }}
+                  >
+                    <RepeatIcon />
+                  </button>
+                  <label className="visually-hidden" htmlFor={`rate-${c.index}`}>Playback speed</label>
+                  <select
+                    id={`rate-${c.index}`}
+                    value={rate}
+                    onChange={(e) => setRate(Number(e.target.value))}
+                    style={{
+                      fontFamily: '"Space Mono", monospace',
+                      fontSize: 12,
+                      background: 'var(--surface)',
+                      color: 'var(--text-primary)',
+                      border: '1px solid var(--border-visible)',
+                      borderRadius: 8,
+                      minHeight: 44,
+                      padding: '0 8px',
+                    }}
+                  >
+                    {[0.75, 1, 1.25, 1.5].map((r) => (
+                      <option key={r} value={r}>{r}×</option>
+                    ))}
+                  </select>
+                </div>
               )}
             </li>
           );
