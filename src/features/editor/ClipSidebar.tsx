@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { usePlaybackStore } from '../playback/playbackStore';
 import { PlayIcon, PauseIcon, RepeatIcon } from '../../ui/icons';
+import { isWhisperBetaEnabled } from '../../core/services/localWhisper';
 
 export interface ClipRowData {
   index: number;
@@ -18,6 +19,8 @@ interface Props {
   onTogglePlay: (index: number) => void;
   onSeek?: (fraction: number) => void;
   onDeleteClip?: (index: number) => void;
+  onWhisperClip?: (index: number) => Promise<string>;
+  onApplyWhisper?: (index: number, suggestion: string) => void;
 }
 
 function fmt(sec: number): string {
@@ -61,7 +64,7 @@ function SeekSlider({
 }
 
 export function ClipSidebar({
-  chunks, activeClipIndex, approximate, playingIndex, progressFraction, panelOpen, onTogglePlay, onSeek, onDeleteClip,
+  chunks, activeClipIndex, approximate, playingIndex, progressFraction, panelOpen, onTogglePlay, onSeek, onDeleteClip, onWhisperClip, onApplyWhisper,
 }: Props) {
   const activeRef = useRef<HTMLLIElement>(null);
   const error = usePlaybackStore((s) => s.error);
@@ -70,6 +73,16 @@ export function ClipSidebar({
   const rate = usePlaybackStore((s) => s.rate);
   const setRate = usePlaybackStore((s) => s.setRate);
   const [armedDelete, setArmedDelete] = useState<number | null>(null);
+  const [whisperState, setWhisperState] = useState<{ busy: boolean; msg: string; suggestion?: string } | null>(null);
+
+  const runWhisper = (index: number) => {
+    if (!onWhisperClip || !onApplyWhisper) return;
+    setWhisperState({ busy: true, msg: '[LOCAL MODEL: LOADING / TRANSCRIBING…]' });
+    void onWhisperClip(index)
+      .then((text) => setWhisperState({ busy: false, msg: `[WHISPER SUGGESTION]: ${text}`, suggestion: text }))
+      .catch((err: unknown) =>
+        setWhisperState({ busy: false, msg: `[ERROR: LOCAL TRANSCRIBE — ${err instanceof Error ? err.message : 'FAILED'}]` }));
+  };
 
   useEffect(() => {
     activeRef.current?.scrollIntoView?.({ block: 'nearest' });
@@ -165,6 +178,31 @@ export function ClipSidebar({
                       <option key={r} value={r}>{r}×</option>
                     ))}
                   </select>
+                </div>
+              )}
+              {isActive && approximate && approximate && onWhisperClip && onApplyWhisper && isWhisperBetaEnabled() && (
+                <div style={{ padding: '4px 0 8px' }}>
+                  {whisperState?.msg && (
+                    <p className="status-line" style={{ margin: '0 0 4px', overflowWrap: 'anywhere' }}>
+                      {whisperState.msg}
+                    </p>
+                  )}
+                  <button
+                    onClick={() => runWhisper(c.index)}
+                    disabled={whisperState?.busy}
+                    style={{ minHeight: 36, fontSize: 12 }}
+                  >
+                    {whisperState?.busy ? '[Working…]' : 'Re-transcribe (local)'}
+                  </button>
+                  {!whisperState?.busy && whisperState?.suggestion && (
+                    <button
+                      className="primary"
+                      onClick={() => onApplyWhisper!(c.index, whisperState.suggestion!)}
+                      style={{ marginLeft: 8, minHeight: 36, fontSize: 12 }}
+                    >
+                      Apply suggestion
+                    </button>
+                  )}
                 </div>
               )}
             </li>

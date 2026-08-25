@@ -19,6 +19,9 @@ export default function RecordingView() {
   const start = useRecordingStore((s) => s.start);
   const restartText = useRecordingStore((s) => s.restartText);
   const stopAndSave = useRecordingStore((s) => s.stopAndSave);
+  const paused = useRecordingStore((s) => s.paused);
+  const pauseToggle = useRecordingStore((s) => s.pauseToggle);
+  const appendMode = useAppStore((s) => s.appendMode);
   const articleId = useAppStore((s) => s.activeArticleId)!;
   const navigate = useAppStore((s) => s.navigate);
   const startedRef = useRef(false);
@@ -75,20 +78,26 @@ export default function RecordingView() {
         <span className="label" style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
           {status === 'recording' ? (
             <>
-              <span className="rec-dot" aria-hidden="true" />
-              Recording
+              {!paused && <span className="rec-dot" aria-hidden="true" />}
+              {appendMode ? 'Appending' : 'Recording'}
+              {paused ? ' · Paused' : ''}
             </>
           ) : (
-            'Ready'
+            appendMode ? 'Append recording' : 'Ready'
           )}
         </span>
         {status === 'recording' ? (
-          <button className="primary" onClick={() => void stopAndSave(articleId)}>
-            Stop
-          </button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={pauseToggle} aria-pressed={paused}>
+              {paused ? 'Resume' : 'Pause'}
+            </button>
+            <button className="primary" onClick={() => void stopAndSave(articleId)}>
+              Stop
+            </button>
+          </div>
         ) : (
           <button className="primary" onClick={() => void start()}>
-            Start recording
+            {appendMode ? 'Start appending' : 'Start recording'}
           </button>
         )}
       </div>

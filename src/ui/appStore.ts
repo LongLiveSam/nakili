@@ -5,14 +5,18 @@ export type View = 'home' | 'record' | 'editor';
 interface AppState {
   view: View;
   activeArticleId: string | null;
+  appendMode: boolean;
+  setAppend: (v: boolean) => void;
   navigate: (view: View, articleId?: string | null) => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
   view: 'home',
   activeArticleId: null,
+  appendMode: false,
+  setAppend: (v) => set({ appendMode: v }),
   navigate: (view, articleId = null) => {
-    set({ view, activeArticleId: articleId });
+    set({ view, activeArticleId: articleId, appendMode: false });
     // Keep the browser back button working (UX rule: back must behave predictably).
     try {
       window.history.pushState({ view, activeArticleId: articleId }, '');

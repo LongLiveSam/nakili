@@ -4,6 +4,8 @@ export interface MediaRecorderLike {
   start(): void;
   stop(): void;
   state: 'inactive' | 'recording';
+  pause?(): void;
+  resume?(): void;
   ondataavailable: ((e: { data: Blob }) => void) | null;
   onstop: (() => void) | null;
   onerror: ((e: { error?: unknown }) => void) | null;
@@ -36,6 +38,8 @@ export class RecorderService {
   private chunks: RecordedChunk[] = [];
   private timerId: ReturnType<typeof setInterval> | null = null;
   private running = false;
+  private paused = false;
+  private indexBase = 0;
   private audioCtx: AudioContext | null = null;
   private analyser: AnalyserNode | null = null;
 
@@ -87,11 +91,12 @@ export class RecorderService {
     return this.analyser;
   }
 
-  start(): void {
+  start(opts: { startIndex?: number } = {}): void {
     if (!this.stream) throw new Error('microphone not acquired: call requestMicrophone() first');
     this.chunks = [];
+    this.indexBase = opts.startIndex ?? 0;
     this.running = true;
-    this.beginChunk(0);
+    this.beginChunk(this.indexBase);
     this.timerId = this.setIntervalFn(() => this.rollOver(), CHUNK_SECONDS * 1000);
   }
 
@@ -113,6 +118,24 @@ export class RecorderService {
     this.analyser = null;
     void this.audioCtx?.close().catch(() => {});
     this.audioCtx = null;
+  }
+
+  /** Halt capture + rollover mid-session; resume() continues the same chunk. */
+  pause(): void {
+    if (!this.running || this.paused) return;
+    this.paused = true;
+    if (this.timerId !== null) {
+      this.clearIntervalFn(this.timerId);
+      this.timerId = null;
+    }
+    try { this.recorder?.pause?.(); } catch { /* ignore */ }
+  }
+
+  resume(): void {
+    if (!this.paused || !this.running) return;
+    this.paused = false;
+    try { this.recorder?.resume?.(); } catch { /* ignore */ }
+    this.timerId = this.setIntervalFn(() => this.rollOver(), CHUNK_SECONDS * 1000);
   }
 
   private beginChunk(index: number): void {
@@ -141,7 +164,7 @@ export class RecorderService {
   private rollOver(): void {
     if (!this.running || !this.recorder) return;
     const current = this.recorder;
-    const nextIndex = this.chunks.length + 1;
+    const nextIndex = this.indexBase + this.chunks.length + 1;
     current.onstop = () => {
       current.onstop = null;
       if (this.running) this.beginChunk(nextIndex);

@@ -30,15 +30,18 @@ export async function deleteArticleCascade(id: string): Promise<void> {
 export async function saveSessionAudio(
   articleId: string,
   blobs: Blob[],
-  chunkSeconds = 30,
+  opts: { startIndex?: number; startOffsetSec?: number; chunkSeconds?: number } = {},
 ): Promise<string[]> {
+  const startIndex = opts.startIndex ?? 0;
+  const startOffsetSec = opts.startOffsetSec ?? 0;
+  const chunkSeconds = opts.chunkSeconds ?? 30;
   const keys = blobs.map(() => uuid());
   const rows: AudioChunk[] = blobs.map((_, i) => ({
     id: uuid(),
     articleId,
-    index: i,
-    startTimeSec: i * chunkSeconds,
-    endTimeSec: (i + 1) * chunkSeconds,
+    index: startIndex + i,
+    startTimeSec: startOffsetSec + i * chunkSeconds,
+    endTimeSec: startOffsetSec + (i + 1) * chunkSeconds,
     blobKey: keys[i],
     durationSec: chunkSeconds,
   }));

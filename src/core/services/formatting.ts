@@ -80,3 +80,28 @@ export function planParagraphBreaks(
   }
   return { text, insertOffsets: cleaned };
 }
+
+/** Unambiguous filler words swept after dictation ('like'/'kinda' excluded on purpose). */
+const FILLER_RE = /\b(um+|uh+|erm|hmm+|you know)\b[,.]?\s*/gi;
+
+export interface FillerHit { start: number; end: number; word: string }
+
+export function findFillers(text: string): FillerHit[] {
+  const hits: FillerHit[] = [];
+  for (const m of text.matchAll(FILLER_RE)) {
+    hits.push({ start: m.index ?? 0, end: (m.index ?? 0) + m[0].trim().length, word: m[0].trim() });
+  }
+  return hits;
+}
+
+/** Smart quotes, em-dash from '--', ellipsis from '...'. */
+export function smartTypography(text: string): string {
+  return text
+    .replace(/\.{3}/g, '\u2026')
+    .replace(/(\w)--(?=\w)/g, '$1\u2014')
+    .replace(/--/g, '\u2014')
+    .replace(/(^|[\s([{])"/g, '$1\u201C')
+    .replace(/"/g, '\u201D')
+    .replace(/(^|[\s([{])'/g, '$1\u2018')
+    .replace(/'/g, '\u2019');
+}

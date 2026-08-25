@@ -2,12 +2,15 @@ import { useEffect, useRef, useState } from 'react';
 import { useEditorStore } from './editorStore';
 import { useAppStore } from '../../ui/appStore';
 import { exportTranscript } from '../../core/services/ExportService';
-import { getChunks, putArticle, deleteClip } from '../../core/db/repositories';
+import { getChunks, putArticle, deleteClip, getAudioBlob } from '../../core/db/repositories';
 import { ClipSidebar, type ClipRowData } from './ClipSidebar';
 import { ConfirmDialog } from '../library/ConfirmDialog';
 import { usePlaybackStore } from '../playback/playbackStore';
 import { ClipPlayerProvider } from '../playback/ClipPlayerProvider';
 import { ArrowLeftIcon } from '../../ui/icons';
+import { findFillers, smartTypography } from '../../core/services/formatting';
+
+import { transcribeClipLocally, isWhisperBetaEnabled } from '../../core/services/localWhisper';
 
 function loadFontSize(): number {
   try {
@@ -15,6 +18,17 @@ function loadFontSize(): number {
     return v >= 14 && v <= 24 ? v : 18;
   } catch {
     return 18;
+  }
+}
+
+function loadVocabTerms(): string[] {
+  try {
+    return (localStorage.getItem('nakili-vocab') ?? '')
+      .split('\n')
+      .map((t) => t.trim())
+      .filter(Boolean);
+  } catch {
+    return [];
   }
 }
 
@@ -33,6 +47,9 @@ export default function EditorView() {
   const [titleDraft, setTitleDraft] = useState('');
   const [panelOpen, setPanelOpen] = useState(false);
   const [fontSize, setFontSize] = useState(loadFontSize);
+  const [reading, setReading] = useState(false);
+  const [sweep, setSweep] = useState<{ ranges: Array<{ start: number; end: number }>; i: number } | null>(null);
+  const whisperBeta = isWhisperBetaEnabled();
 
   // Live-apply font-size changes made in Settings.
   useEffect(() => {
@@ -104,6 +121,83 @@ export default function EditorView() {
     })();
   };
 
+  const handleWhisperClip = async (index: number): Promise<string> => {
+    const rows = await getChunks(articleId);
+    const chunk = rows.find((c) => c.index === index);
+    if (!chunk) throw new Error('clip missing');
+    const blob = await getAudioBlob(chunk.blobKey);
+    if (!blob) throw new Error('audio missing');
+    return transcribeClipLocally(blob);
+  };
+
+  const handleApplyWhisper = (index: number, suggestion: string) => {
+    const st = useEditorStore.getState();
+    const candidates = st.segments.filter((s) => s.audioChunkIndex === index);
+    if (candidates.length === 0 || !st.article) return;
+    const target = candidates.reduce((a, b) =>
+      b.endCharOffset - b.startCharOffset > a.endCharOffset - a.startCharOffset ? b : a,
+    );
+    const cur = st.article.transcriptText;
+    const next = cur.slice(0, target.startCharOffset) + suggestion + cur.slice(target.endCharOffset + 1);
+    setText(next);
+  };
+
+  // --- Writing tools -------------------------------------------------------
+  const text = article?.transcriptText ?? '';
+  const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+  const readMin = Math.max(1, Math.round(words / 200));
+  const fillerCount = findFillers(text).length;
+
+  const selectRange = (start: number, end: number) => {
+    const ta = taRef.current;
+    if (!ta) return;
+    ta.focus();
+    ta.setSelectionRange(start, end);
+    setCursor(start);
+  };
+
+  const cycleFillers = () => {
+    const hits = findFillers(text);
+    if (hits.length === 0) { setSweep(null); return; }
+    const i = sweep ? (sweep.i + 1) % hits.length : 0;
+    setSweep({ ranges: hits.map((h) => ({ start: h.start, end: h.end })), i });
+    selectRange(hits[i].start, hits[i].end);
+  };
+
+  const vocabTerms = loadVocabTerms();
+  const vocabRanges = vocabTerms.flatMap((term) => {
+    const ranges: Array<{ start: number; end: number }> = [];
+    const hay = text.toLowerCase();
+    const needle = term.toLowerCase();
+    let idx = hay.indexOf(needle);
+    while (idx !== -1 && ranges.length < 50) {
+      ranges.push({ start: idx, end: idx + term.length });
+      idx = hay.indexOf(needle, idx + needle.length);
+    }
+    return ranges;
+  });
+
+  const cycleVocab = () => {
+    if (vocabRanges.length === 0) { setSweep(null); return; }
+    const i = sweep ? (sweep.i + 1) % vocabRanges.length : 0;
+    setSweep({ ranges: vocabRanges, i });
+    selectRange(vocabRanges[i].start, vocabRanges[i].end);
+  };
+
+  const toggleReading = () => {
+    if (!('speechSynthesis' in window)) return;
+    if (reading) {
+      speechSynthesis.cancel();
+      setReading(false);
+      return;
+    }
+    const u = new SpeechSynthesisUtterance(text || 'Nothing to read yet.');
+    u.onend = () => setReading(false);
+    u.onerror = () => setReading(false);
+    speechSynthesis.speak(u);
+    setReading(true);
+  };
+
   const handleShare = async () => {
     try {
       await exportTranscript(article!.id);
@@ -148,6 +242,26 @@ export default function EditorView() {
               </button>
             </div>
           </div>
+          <div className="label" style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', marginBottom: 8 }}>
+            <span>{words} words</span>
+            <span>· {readMin} min read</span>
+            {fillerCount > 0 && (
+              <button className="ghost" style={{ minHeight: 28, padding: '0 10px' }} onClick={cycleFillers}>
+                [Fillers: {fillerCount} — review]
+              </button>
+            )}
+            {vocabRanges.length > 0 && (
+              <button className="ghost" style={{ minHeight: 28, padding: '0 10px' }} onClick={cycleVocab}>
+                [Vocab hits: {vocabRanges.length} — review]
+              </button>
+            )}
+          </div>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
+            <button onClick={() => setText(smartTypography(text))}>Smart typography</button>
+            <button aria-pressed={reading} onClick={toggleReading}>
+              {reading ? '[Reading… stop]' : 'Read aloud'}
+            </button>
+          </div>
           <label htmlFor="transcript" className="visually-hidden">Transcript</label>
           <textarea
             id="transcript"
@@ -171,6 +285,7 @@ export default function EditorView() {
           onTogglePlay={(index) => void toggle(index)}
           onSeek={seek}
           onDeleteClip={handleDeleteClip}
+          {...(whisperBeta ? { onWhisperClip: handleWhisperClip, onApplyWhisper: handleApplyWhisper } : {})}
         />
 
         <button

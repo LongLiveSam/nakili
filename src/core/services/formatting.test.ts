@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { applyVoiceCommands, planParagraphBreaks } from './formatting';
+import { applyVoiceCommands, planParagraphBreaks, findFillers, smartTypography } from './formatting';
 
 describe('applyVoiceCommands', () => {
   it('replaces paragraph and line commands', () => {
@@ -50,5 +50,28 @@ describe('planParagraphBreaks', () => {
   it('skips insertion at very start/end of a segment', () => {
     const a = planParagraphBreaks(text, segs, [0.1, 9.95], 0);
     expect(a.insertOffsets).toEqual([]);
+  });
+});
+
+describe('findFillers', () => {
+  it('finds unambiguous fillers with positions', () => {
+    const hits = findFillers('um okay and uh nothing');
+    expect(hits.length).toBe(2);
+    expect(hits[0]).toMatchObject({ word: 'um', start: 0 });
+  });
+
+  it('ignores lookalike words', () => {
+    expect(findFillers('I like hummus').length).toBe(0);
+  });
+});
+
+describe('smartTypography', () => {
+  it('converts dashes and ellipsis', () => {
+    expect(smartTypography('wait--what...')).toBe('wait\u2014what\u2026');
+  });
+
+  it('curls quotes by position', () => {
+    const out = smartTypography('he said "hi"');
+    expect(out).toContain('\u201Chi\u201D');
   });
 });

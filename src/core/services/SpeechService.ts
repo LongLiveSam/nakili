@@ -118,6 +118,23 @@ export class SpeechService {
     this.recognition?.stop();
   }
 
+  /** Soft pause: stop recognition but keep the timeline (no startedAt reset). */
+  pause(): void {
+    if (!this.recognition) return;
+    this.paused = true;
+    this.pendingRestart = false;
+    try { this.recognition.stop(); } catch { /* ignore */ }
+  }
+
+  /** Resume after pause(): restart recognition on the existing clock. */
+  resume(): void {
+    if (!this.paused || !this.recognition) return;
+    this.paused = false;
+    try { this.recognition.start(); } catch { /* already running */ }
+  }
+
+  private paused = false;
+
   private buildRecognition(): RecognitionLike {
     const rec = this.createRecognition();
     rec.continuous = true;
