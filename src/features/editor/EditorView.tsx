@@ -9,6 +9,15 @@ import { usePlaybackStore } from '../playback/playbackStore';
 import { ClipPlayerProvider } from '../playback/ClipPlayerProvider';
 import { ArrowLeftIcon } from '../../ui/icons';
 
+function loadFontSize(): number {
+  try {
+    const v = Number(localStorage.getItem('nakili-fontsize'));
+    return v >= 14 && v <= 24 ? v : 18;
+  } catch {
+    return 18;
+  }
+}
+
 export default function EditorView() {
   const articleId = useAppStore((s) => s.activeArticleId)!;
   const navigate = useAppStore((s) => s.navigate);
@@ -23,6 +32,20 @@ export default function EditorView() {
   const [renaming, setRenaming] = useState(false);
   const [titleDraft, setTitleDraft] = useState('');
   const [panelOpen, setPanelOpen] = useState(false);
+  const [fontSize, setFontSize] = useState(loadFontSize);
+
+  // Live-apply font-size changes made in Settings.
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === 'nakili-fontsize') setFontSize(loadFontSize());
+    };
+    window.addEventListener('storage', onStorage);
+    const id = window.setInterval(() => setFontSize(loadFontSize()), 1500);
+    return () => {
+      window.removeEventListener('storage', onStorage);
+      window.clearInterval(id);
+    };
+  }, []);
 
   useEffect(() => {
     if (!articleId) return;
@@ -136,7 +159,7 @@ export default function EditorView() {
             onSelect={syncCursor}
             onKeyDown={handleKeyDown}
             spellCheck
-            style={{ width: '100%', height: '70vh', fontSize: 18, lineHeight: 1.6 }}
+            style={{ width: '100%', height: '70vh', fontSize, lineHeight: 1.6 }}
           />        </div>
 
         <ClipSidebar

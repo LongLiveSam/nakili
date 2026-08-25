@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { exportAllBackup } from '../core/services/ExportService';
 import { storageUsage } from '../core/db/repositories';
 import { db } from '../core/db/db';
+import { Toggle } from './Toggle';
 
 interface Props {
   open: boolean;
@@ -38,6 +39,7 @@ export function SettingsDialog({ open, onClose }: Props) {
   const [text, setText] = useState(loadStored('nakili-vocab'));
   const [lang, setLang] = useState(loadStored('nakili-lang', 'en-US'));
   const [micId, setMicId] = useState(loadStored('nakili-mic'));
+  const [fontSize, setFontSize] = useState(loadStored('nakili-fontsize', '18'));
   const [mics, setMics] = useState<MediaDeviceInfo[]>([]);
   const [usage, setUsage] = useState<{ usage: number; quota: number } | null>(null);
   const [clearArmed, setClearArmed] = useState(false);
@@ -51,6 +53,7 @@ export function SettingsDialog({ open, onClose }: Props) {
       setText(loadStored('nakili-vocab'));
       setLang(loadStored('nakili-lang', 'en-US'));
       setMicId(loadStored('nakili-mic'));
+      setFontSize(loadStored('nakili-fontsize', '18'));
       setSaved(false);
       setBackupStatus(null);
       setClearArmed(false);
@@ -95,7 +98,13 @@ export function SettingsDialog({ open, onClose }: Props) {
   };
 
   return (
-    <dialog ref={ref} onClose={onClose} aria-label="Settings">
+    <dialog
+      ref={ref}
+      onClose={onClose}
+      aria-label="Settings"
+      onClick={(e) => { if (e.target === ref.current) onClose(); }}
+    >
+      <button className="ghost dialog-close" aria-label="Close" onClick={onClose}>[ X ]</button>
       <h2 style={{ marginTop: 0 }}>Settings</h2>
 
       <h3>Recognition language</h3>
@@ -162,6 +171,43 @@ export function SettingsDialog({ open, onClose }: Props) {
       <p style={{ color: 'var(--text-disabled)', fontSize: 12 }}>
         Applies to the next recording.
       </p>
+
+      <h3>Dictation</h3>
+      <Toggle label="Voice commands" storageKey="nakili-voice-cmds" defaultOn />
+      <Toggle
+        label="Show live interim text"
+        storageKey="nakili-interim"
+        defaultOn
+      />
+      <Toggle label="Auto-paragraph on silence" storageKey="nakili-autopara" defaultOn />
+
+      <h3>Playback</h3>
+      <Toggle label="Auto-play next clip" storageKey="nakili-autonext" defaultOn={false} />
+
+      <h3>Editor</h3>
+      <label className="label" htmlFor="fontsize">Font size</label>
+      <select
+        id="fontsize"
+        value={fontSize}
+        onChange={(e) => {
+          setFontSize(e.target.value);
+          saveStored('nakili-fontsize', e.target.value);
+        }}
+        style={{
+          font: 'inherit',
+          background: 'var(--surface)',
+          color: 'var(--text-primary)',
+          border: '1px solid var(--border-visible)',
+          borderRadius: 8,
+          minHeight: 44,
+          padding: '0 12px',
+          width: '100%',
+        }}
+      >
+        <option value="16">Small</option>
+        <option value="18">Medium</option>
+        <option value="20">Large</option>
+      </select>
 
       <h3>Data safety</h3>
       <p>

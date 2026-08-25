@@ -16,7 +16,13 @@ export function HelpDialog({ open, onClose }: Props) {
   }, [open]);
 
   return (
-    <dialog ref={ref} onClose={onClose} aria-label="Help">
+    <dialog
+      ref={ref}
+      onClose={onClose}
+      aria-label="Help"
+      onClick={(e) => { if (e.target === ref.current) onClose(); }}
+    >
+      <button className="ghost dialog-close" aria-label="Close" onClick={onClose}>[ X ]</button>
       <div style={{ maxWidth: 560 }}>
       <h2 style={{ marginTop: 0 }}>Help</h2>
 
