@@ -142,7 +142,7 @@ export default function EditorView() {
                   {exportStatus}
                 </span>
               )}
-              <button onClick={() => void handleShare()}>Share</button>
+              <button onClick={() => void handleShare()}>Download</button>
               <button onClick={() => { setTitleDraft(article.title); setRenaming(true); }}>
                 Rename
               </button>

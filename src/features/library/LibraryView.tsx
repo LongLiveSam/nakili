@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLibraryStore, formatDuration } from './libraryStore';
 import { ConfirmDialog } from './ConfirmDialog';
 import { useAppStore } from '../../ui/appStore';
@@ -26,6 +26,7 @@ export default function LibraryView() {
   const [renaming, setRenaming] = useState<Article | null>(null);
   const [renameText, setRenameText] = useState('');
   const [deleting, setDeleting] = useState<Article | null>(null);
+  const menuWrapRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { void refresh(); }, [refresh]);
 
@@ -39,6 +40,26 @@ export default function LibraryView() {
     const id = await createArticle();
     navigate('record', id);
   };
+
+  useEffect(() => {
+    if (!menuFor) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setMenuFor(null);
+        document.getElementById(`actions-${menuFor}`)?.focus();
+      }
+    };
+    const onPointer = (e: MouseEvent) => {
+      const wrap = menuWrapRef.current;
+      if (wrap && !wrap.contains(e.target as Node)) setMenuFor(null);
+    };
+    window.addEventListener('keydown', onKey);
+    document.addEventListener('mousedown', onPointer);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.removeEventListener('mousedown', onPointer);
+    };
+  }, [menuFor]);
 
   return (
     <main className="view">
@@ -109,44 +130,62 @@ export default function LibraryView() {
                   {formatDate(a.updatedAt)} · {formatDuration(a.durationSec)}
                 </span>
               </button>
-              <button
-                aria-label={`Actions for ${a.title}`}
-                aria-expanded={menuFor === a.id}
-                onClick={() => setMenuFor(menuFor === a.id ? null : a.id)}
-              >
-                <MoreVerticalIcon />
-              </button>
-              {menuFor === a.id && (
-                <div style={{
-                  border: '1px solid var(--border-visible)', borderRadius: 8,
-                  background: 'var(--surface-raised)', display: 'grid',
-                }}>
-                  <button onClick={() => { setRenaming(a); setRenameText(a.title); setMenuFor(null); }}>
-                    Rename
-                  </button>
-                  <button onClick={async () => { setMenuFor(null); await duplicateArticle(a.id); }}>
-                    Duplicate
-                  </button>
-                  <button onClick={async () => { setMenuFor(null); try { await exportTranscript(a.id); setStatus('[DOWNLOADED TRANSCRIPT]'); } catch { setStatus('[ERROR: EXPORT FAILED]'); } }}>
-                    Export text
-                  </button>
-                  <button onClick={async () => { setMenuFor(null); try { await exportTranscript(a.id, 'md'); setStatus('[DOWNLOADED MARKDOWN]'); } catch { setStatus('[ERROR: EXPORT FAILED]'); } }}>
-                    Export Markdown
-                  </button>
-                  <button onClick={async () => { setMenuFor(null); try { await exportFullRecording(a.id, 'mp3'); setStatus('[DOWNLOADED AUDIO · MP3]'); } catch { setStatus('[ERROR: EXPORT FAILED]'); } }}>
-                    Export audio · MP3
-                  </button>
-                  <button onClick={async () => { setMenuFor(null); try { await exportFullRecording(a.id, 'wav'); setStatus('[DOWNLOADED AUDIO · WAV]'); } catch { setStatus('[ERROR: EXPORT FAILED]'); } }}>
-                    Export audio · WAV
-                  </button>
-                  <button onClick={async () => { setMenuFor(null); try { await exportFullRecording(a.id, 'webm'); setStatus('[DOWNLOADED AUDIO · ORIGINAL]'); } catch { setStatus('[ERROR: EXPORT FAILED]'); } }}>
-                    Export audio · Original
-                  </button>
-                  <button className="danger" onClick={() => { setDeleting(a); setMenuFor(null); }}>
-                    Delete
-                  </button>
-                </div>
-              )}
+              <div ref={menuFor === a.id ? menuWrapRef : undefined} style={{ display: 'inline-flex', position: 'relative' }}>
+                <button
+                  id={`actions-${a.id}`}
+                  aria-label={`Actions for ${a.title}`}
+                  aria-haspopup="menu"
+                  aria-expanded={menuFor === a.id}
+                  onClick={() => setMenuFor(menuFor === a.id ? null : a.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'ArrowDown' && menuFor !== a.id) setMenuFor(a.id);
+                  }}
+                >
+                  <MoreVerticalIcon />
+                </button>
+                {menuFor === a.id && (
+                  <div
+                    role="menu"
+                    aria-label={`${a.title} actions`}
+                    onKeyDown={(e) => {
+                      const buttons = Array.from(e.currentTarget.querySelectorAll('button'));
+                      const i = buttons.indexOf(document.activeElement as HTMLButtonElement);
+                      if (e.key === 'ArrowDown') { e.preventDefault(); buttons[(i + 1) % buttons.length]?.focus(); }
+                      if (e.key === 'ArrowUp') { e.preventDefault(); buttons[(i - 1 + buttons.length) % buttons.length]?.focus(); }
+                    }}
+                    style={{
+                      position: 'absolute', right: 0, top: 'calc(100% + 4px)', zIndex: 20,
+                      border: '1px solid var(--border-visible)', borderRadius: 8,
+                      background: 'var(--surface-raised)', display: 'grid', minWidth: 180,
+                    }}
+                  >
+                    <button role="menuitem" onClick={() => { setRenaming(a); setRenameText(a.title); setMenuFor(null); }}>
+                      Rename
+                    </button>
+                    <button role="menuitem" onClick={async () => { setMenuFor(null); await duplicateArticle(a.id); }}>
+                      Duplicate
+                    </button>
+                    <button role="menuitem" onClick={async () => { setMenuFor(null); try { await exportTranscript(a.id); setStatus('[DOWNLOADED TRANSCRIPT]'); } catch { setStatus('[ERROR: EXPORT FAILED]'); } }}>
+                      Export text
+                    </button>
+                    <button role="menuitem" onClick={async () => { setMenuFor(null); try { await exportTranscript(a.id, 'md'); setStatus('[DOWNLOADED MARKDOWN]'); } catch { setStatus('[ERROR: EXPORT FAILED]'); } }}>
+                      Export Markdown
+                    </button>
+                    <button role="menuitem" onClick={async () => { setMenuFor(null); try { await exportFullRecording(a.id, 'mp3'); setStatus('[DOWNLOADED AUDIO · MP3]'); } catch { setStatus('[ERROR: EXPORT FAILED]'); } }}>
+                      Export audio · MP3
+                    </button>
+                    <button role="menuitem" onClick={async () => { setMenuFor(null); try { await exportFullRecording(a.id, 'wav'); setStatus('[DOWNLOADED AUDIO · WAV]'); } catch { setStatus('[ERROR: EXPORT FAILED]'); } }}>
+                      Export audio · WAV
+                    </button>
+                    <button role="menuitem" onClick={async () => { setMenuFor(null); try { await exportFullRecording(a.id, 'webm'); setStatus('[DOWNLOADED AUDIO · ORIGINAL]'); } catch { setStatus('[ERROR: EXPORT FAILED]'); } }}>
+                      Export audio · Original
+                    </button>
+                    <button role="menuitem" className="danger" onClick={() => { setDeleting(a); setMenuFor(null); }}>
+                      Delete
+                    </button>
+                  </div>
+                )}
+              </div>
             </li>
           ))}
         </ul>

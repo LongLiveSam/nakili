@@ -58,7 +58,7 @@ describe('library', () => {
     await seed('Old name');
     render(<LibraryView />);
     await userEvent.click(await screen.findByRole('button', { name: /actions for Old name/i }));
-    await userEvent.click(screen.getByRole('button', { name: /^rename$/i }));
+    await userEvent.click(screen.getByRole('menuitem', { name: /^rename$/i }));
     const input = screen.getByLabelText(/title/i);
     await userEvent.clear(input);
     await userEvent.type(input, 'New name');
@@ -70,7 +70,7 @@ describe('library', () => {
     await seed('Doomed');
     render(<LibraryView />);
     await userEvent.click(await screen.findByRole('button', { name: /actions for Doomed/i }));
-    await userEvent.click(screen.getByRole('button', { name: /^delete$/i }));
+    await userEvent.click(screen.getByRole('menuitem', { name: /^delete$/i }));
     // Confirmation dialog appears before actual deletion:
     expect(useLibraryStore.getState().articles.length).toBe(1);
     await userEvent.click(screen.getByRole('button', { name: /^delete recording$/i }));
@@ -84,7 +84,7 @@ describe('library', () => {
     });
     render(<LibraryView />);
     await userEvent.click(await screen.findByRole('button', { name: /actions for Original/i }));
-    await userEvent.click(screen.getByRole('button', { name: /^duplicate$/i }));
+    await userEvent.click(screen.getByRole('menuitem', { name: /^duplicate$/i }));
     expect(await screen.findByText(/copy of original/i)).toBeInTheDocument();
   });
 

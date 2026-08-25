@@ -70,7 +70,7 @@ export function HelpDialog({ open, onClose }: Props) {
 
         <h3>Exporting</h3>
         <p>
-          Use <strong>Share</strong> in the editor or the ⋮ menu on any recording to download
+          Use <strong>Download</strong> in the editor or the ⋮ menu on any recording to save
           the transcript as <code>.txt</code> or the full audio as <code>.webm</code>. Files
           go to your Downloads folder.
         </p>
