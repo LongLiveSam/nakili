@@ -19,9 +19,13 @@ describe('app shell', () => {
     document.documentElement.removeAttribute('data-theme');
   });
 
-  it('shows home view by default', () => {
+  it('shows the landing page on first visit', async () => {
     render(<App />);
-    expect(screen.getByRole('heading', { name: 'Recordings' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: 'Nakili' }, { timeout: 4000 }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/Turn your voice into polished articles/)).toBeInTheDocument();
+    expect(screen.getByText('Speak naturally')).toBeInTheDocument();
   });
 
   it('shows site header with brand, Recordings link and Help', () => {
@@ -33,7 +37,7 @@ describe('app shell', () => {
   it('opens the Help dialog from the header', async () => {
     render(<App />);
     await userEvent.click(screen.getAllByRole('button', { name: 'Help' })[0]);
-    expect(await screen.findByText('How it works')).toBeInTheDocument();
+    expect(await screen.findByText('Fixing mistakes with clips')).toBeInTheDocument();
     expect(screen.getByText(/Nothing leaves your browser/i)).toBeInTheDocument();
   });
 
@@ -55,10 +59,10 @@ describe('app shell', () => {
     expect(screen.getByRole('button', { name: new RegExp(`theme: (?!${before})`, 'i') })).toBeInTheDocument();
   });
 
-  it('navigates to record view on New recording', async () => {
+  it('navigates to record view from the landing CTA', async () => {
     render(<App />);
-    const buttons = await screen.findAllByRole('button', { name: /new recording/i });
-    await userEvent.click(buttons[0]);
+    const cta = await screen.findByRole('button', { name: /start dictating/i });
+    await userEvent.click(cta);
     await waitFor(() => expect(useAppStore.getState().view).toBe('record'));
     expect(useAppStore.getState().activeArticleId).toBeTruthy();
   });

@@ -4,6 +4,7 @@ import { ConfirmDialog } from './ConfirmDialog';
 import { useAppStore } from '../../ui/appStore';
 import { exportTranscript, exportFullRecording } from '../../core/services/ExportService';
 import { MoreVerticalIcon, SearchIcon } from '../../ui/icons';
+import { Landing } from './Landing';
 import type { Article } from '../../core/models';
 
 function formatDate(ms: number): string {
@@ -70,12 +71,7 @@ export default function LibraryView() {
       {!loaded ? (
         <p className="label" aria-busy="true" aria-live="polite">[LOADING RECORDINGS…]</p>
       ) : articles.length === 0 ? (
-        <div className="empty-state" role="status">
-          <div className="dot-block" aria-hidden="true" />
-          <h2>No recordings yet</h2>
-          <p>Speak, and Nakili writes it down.</p>
-          <p className="label">Speak → Edit → Verify clips · Headset recommended</p>
-        </div>
+        <Landing onStart={() => void handleNew()} />
       ) : (
         <ul role="list" style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: 0 }}>
           {articles
