@@ -1,0 +1,17 @@
+{
+  "name": "Nakili — local-first dictation",
+  "short_name": "Nakili",
+  "description": "Private, local-first dictation. Speak, edit the transcript, verify against 30-second audio clips.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

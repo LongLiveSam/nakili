@@ -33,6 +33,13 @@ function defaultCreateRecognition(): RecognitionLike {
   if (!Ctor) throw new Error('unsupported');
   const rec = new Ctor();
   rec.lang = navigator.language || 'en-US';
+  // User-selected recognition language (Settings) overrides browser default.
+  try {
+    const stored = localStorage.getItem('nakili-lang');
+    if (stored) rec.lang = stored;
+  } catch {
+    /* storage unavailable */
+  }
   return rec;
 }
 

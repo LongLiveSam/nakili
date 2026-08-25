@@ -61,7 +61,11 @@ function AppShell({ children }: { children: React.ReactNode }) {
       <footer className="app-footer">
         <span>Local-first dictation. Nothing leaves your browser.</span>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 12 }}>
-          <a href="mailto:culturedrabbit@gmail.com">Contact</a>
+          <a
+            href={`mailto:culturedrabbit@gmail.com?subject=${encodeURIComponent('Nakili feedback')}&body=${encodeURIComponent(`\n\n—\n${navigator.userAgent}`)}`}
+          >
+            Contact
+          </a>
           <button
             className="ghost"
             onClick={toggleTheme}

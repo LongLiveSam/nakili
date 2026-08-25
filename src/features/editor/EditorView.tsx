@@ -32,6 +32,18 @@ export default function EditorView() {
     );
   }, [articleId, load]);
 
+  // Reliability: flush the debounced autosave when the tab hides or closes.
+  useEffect(() => {
+    const flush = () => { void useEditorStore.getState().flushSave(); };
+    const onVisibility = () => { if (document.visibilityState === 'hidden') flush(); };
+    window.addEventListener('pagehide', flush);
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      window.removeEventListener('pagehide', flush);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, []);
+
   const syncCursor = () => {
     const ta = taRef.current;
     if (!ta) return;

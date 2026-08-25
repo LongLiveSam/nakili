@@ -24,13 +24,13 @@
   --black: #000000;
 
   /* Type scale */
-  --display-xl: 72px;
-  --display-lg: 48px;
-  --heading: 24px;
-  --subheading: 18px;
-  --body-size: 16px;
-  --body-sm: 14px;
-  --caption: 12px;
+  --display-xl: 4.5rem;
+  --display-lg: 3rem;
+  --heading: 1.5rem;
+  --subheading: 1.125rem;
+  --body-size: 1rem;
+  --body-sm: 0.875rem;
+  --caption: 0.75rem;
   --label-size: 11px;
 
   /* Spacing (8px base) */

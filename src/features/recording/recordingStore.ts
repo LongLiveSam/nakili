@@ -11,6 +11,7 @@ let speech: SpeechService | null = null;
 let recorder: RecorderService | null = null;
 let ticker: ReturnType<typeof setInterval> | null = null;
 let startedAtMs = 0;
+let currentDraftId: string | null = null;
 
 /** Test seam: inject fakes instead of constructing real browser services. */
 export function __setServicesForTest(s: SpeechService, r: RecorderService): void {
@@ -52,6 +53,36 @@ interface RecordingState {
   stopAndSave: (articleId: string) => Promise<void>;
 }
 
+function draftKey(articleId: string): string {
+  return `nakili-draft-${articleId}`;
+}
+
+/** Persist finals as a crash-recovery point (best-effort). */
+function saveDraft(articleId: string, finals: FinalResult[]): void {
+  try {
+    localStorage.setItem(draftKey(articleId), JSON.stringify(finals));
+  } catch {
+    /* storage unavailable */
+  }
+}
+
+function loadDraft(articleId: string): FinalResult[] {
+  try {
+    const raw = localStorage.getItem(draftKey(articleId));
+    return raw ? (JSON.parse(raw) as FinalResult[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function clearDraft(articleId: string): void {
+  try {
+    localStorage.removeItem(draftKey(articleId));
+  } catch {
+    /* ignore */
+  }
+}
+
 export const useRecordingStore = create<RecordingState>((set, get) => ({
   status: 'idle',
   elapsedSec: 0,
@@ -72,6 +103,12 @@ export const useRecordingStore = create<RecordingState>((set, get) => ({
       interimText: '',
       elapsedSec: 0,
     });
+    const draftId = useAppStore.getState().activeArticleId;
+    if (draftId) {
+      currentDraftId = draftId;
+      const draft = loadDraft(draftId);
+      if (draft.length > 0) set({ finals: draft });
+    }
     if (!speech || !recorder) makeServices();
     try {
       await recorder!.requestMicrophone();
@@ -87,10 +124,12 @@ export const useRecordingStore = create<RecordingState>((set, get) => ({
     }
     speech!.onInterim = (t) => set({ interimText: t });
     speech!.onFinal = (text, elapsedSec) =>
-      set((s) => ({
-        finals: [...s.finals, { text, startTimeSec: elapsedSec, endTimeSec: elapsedSec }],
-        interimText: '',
-      }));
+      set((s) => {
+        const finals = [...s.finals, { text, startTimeSec: elapsedSec, endTimeSec: elapsedSec }];
+        // Crash-recovery point: persist every confirmed phrase.
+        if (currentDraftId) saveDraft(currentDraftId, finals);
+        return { finals, interimText: '' };
+      });
     speech!.onError = (err, fatal) => {
       if (fatal) {
         set({ errorMessage: `[ERROR: SPEECH RECOGNITION ${err.toUpperCase()} — AUDIO KEEPS RECORDING, LIVE TEXT PAUSED]` });
@@ -136,6 +175,8 @@ export const useRecordingStore = create<RecordingState>((set, get) => ({
 
     speech = null;
     recorder = null;
+    if (currentDraftId) clearDraft(currentDraftId);
+    currentDraftId = null;
     set({ status: 'idle', interimText: '' });
     useAppStore.getState().navigate('editor', articleId);
   },

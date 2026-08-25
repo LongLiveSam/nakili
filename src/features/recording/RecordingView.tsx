@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRecordingStore, getActiveAnalyser } from './recordingStore';
 import { LevelMeter } from './LevelMeter';
 import { useAppStore } from '../../ui/appStore';
@@ -21,6 +21,7 @@ export default function RecordingView() {
   const articleId = useAppStore((s) => s.activeArticleId)!;
   const navigate = useAppStore((s) => s.navigate);
   const startedRef = useRef(false);
+  const [offline, setOffline] = useState(typeof navigator !== 'undefined' && !navigator.onLine);
 
   useEffect(() => {
     if (!startedRef.current) {
@@ -28,6 +29,34 @@ export default function RecordingView() {
       void start();
     }
   }, [start]);
+
+  // Dictation (Chrome server-backed speech) needs a connection.
+  useEffect(() => {
+    const on = () => setOffline(false);
+    const off = () => setOffline(true);
+    window.addEventListener('online', on);
+    window.addEventListener('offline', off);
+    return () => {
+      window.removeEventListener('online', on);
+      window.removeEventListener('offline', off);
+    };
+  }, []);
+
+  // Keyboard shortcut: Ctrl+Shift+D starts/stops dictation.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.shiftKey && e.code === 'KeyD') {
+        e.preventDefault();
+        if (useRecordingStore.getState().status === 'recording') {
+          void stopAndSave(articleId);
+        } else {
+          void start();
+        }
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [start, stopAndSave, articleId]);
 
   const finalText = finals.map((f) => f.text).join(' ');
   const recorderNotice = useRecordingStore((s) => s.recorderNotice);
@@ -77,6 +106,11 @@ export default function RecordingView() {
       )}
       {recorderNotice && (
         <p className="status-line" style={{ textAlign: 'center' }}>{recorderNotice}</p>
+      )}
+      {offline && (
+        <p role="status" className="status-line error" style={{ textAlign: 'center' }}>
+          [OFFLINE — SPEECH RECOGNITION NEEDS A CONNECTION; AUDIO STILL RECORDS]
+        </p>
       )}
 
       <section

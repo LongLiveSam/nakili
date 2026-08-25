@@ -58,6 +58,7 @@ export default function LibraryView() {
           <div className="dot-block" aria-hidden="true" />
           <h2>No recordings yet</h2>
           <p>Speak, and Nakili writes it down.</p>
+          <p className="label">Speak → Edit → Verify clips · Headset recommended</p>
         </div>
       ) : (
         <ul role="list" style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: 0 }}>

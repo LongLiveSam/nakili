@@ -27,8 +27,7 @@ async function shareOrDownload(blob: Blob, filename: string): Promise<void> {
   downloadBlob(blob, filename);
 }
 
-export async function exportTranscript(articleId: string): Promise<void> {
-  const { getArticle } = await import('../db/repositories');
+export async function exportTranscript(articleId: string): Promise<void> {  const { getArticle } = await import('../db/repositories');
   const article = await getArticle(articleId);
   if (!article) throw new Error(`article not found: ${articleId}`);
   const blob = new Blob([article.transcriptText], { type: 'text/plain;charset=utf-8' });
@@ -66,6 +65,7 @@ async function decodeConcat(blobs: Blob[]): Promise<{ pcm: Float32Array; sampleR
 export async function exportFullRecording(
   articleId: string,
   format: AudioExportFormat = 'webm',
+  onProgress?: (fraction: number) => void,
 ): Promise<void> {
   const { getChunks, getAudioBlob } = await import('../db/repositories');
   const [{ getArticle }, chunks] = await Promise.all([
@@ -88,7 +88,7 @@ export async function exportFullRecording(
     if (format === 'wav') {
       await shareOrDownload(encodeWav([pcm], sampleRate), `${slugify(article.title)}.wav`);
     } else {
-      await shareOrDownload(await encodeMp3(pcm, sampleRate, 128), `${slugify(article.title)}.mp3`);
+      await shareOrDownload(await encodeMp3(pcm, sampleRate, 128, onProgress), `${slugify(article.title)}.mp3`);
     }
     return;
   }
@@ -98,4 +98,37 @@ export async function exportFullRecording(
   const ext = firstType.includes('mp4') ? 'm4a' : 'webm';
   const full = new Blob(blobs, { type: firstType });
   await shareOrDownload(full, `${slugify(article.title)}.${ext}`);
+}
+
+/** Full-data safety net: every article, segment, and audio blob as one JSON file. */
+export async function exportAllBackup(): Promise<void> {
+  const { listArticles, getSegments, getChunks, getAudioBlob } = await import('../db/repositories');
+  const articles = await listArticles();
+  const payload = {
+    app: 'nakili',
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    articles: [] as unknown[],
+  };
+  for (const a of articles) {
+    const [segments, chunks] = await Promise.all([getSegments(a.id), getChunks(a.id)]);
+    const audio: Record<string, string> = {};
+    for (const c of chunks) {
+      const b = await getAudioBlob(c.blobKey);
+      if (b) audio[c.blobKey] = await blobToDataURL(b);
+    }
+    (payload.articles as unknown[]).push({ article: a, segments, chunks, audio });
+  }
+  const stamp = new Date().toISOString().slice(0, 10);
+  const json = JSON.stringify(payload, null, 2);
+  downloadBlob(new Blob([json], { type: 'application/json' }), `nakili-backup-${stamp}.json`);
+}
+
+function blobToDataURL(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result));
+    r.onerror = () => reject(r.error ?? new Error('read failed'));
+    r.readAsDataURL(blob);
+  });
 }

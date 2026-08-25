@@ -17,6 +17,7 @@ interface EditorState {
   load: (id: string) => Promise<void>;
   setText: (text: string) => void;
   setCursor: (offset: number) => void;
+  flushSave: () => Promise<void>;
 }
 
 export const useEditorStore = create<EditorState>((set, get) => ({
@@ -63,6 +64,20 @@ export const useEditorStore = create<EditorState>((set, get) => ({
         }
       })();
     }, 500);
+  },
+
+  /** Flush any pending debounced save immediately (tab hide / unload). */
+  flushSave: async () => {
+    if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; }
+    const cur = get();
+    if (!cur.article || cur.saved) return;
+    try {
+      await putArticle(cur.article);
+      await putSegments(cur.segments);
+      set({ saved: true, saveError: false });
+    } catch {
+      set({ saveError: true });
+    }
   },
 
   setCursor: (offset) => {

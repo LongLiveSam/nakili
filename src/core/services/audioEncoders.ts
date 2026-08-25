@@ -42,6 +42,7 @@ export async function encodeMp3(
   pcm: Float32Array,
   sampleRate: number,
   kbps = 128,
+  onProgress?: (fraction: number) => void,
 ): Promise<Blob> {
   const lamejs = await import('@breezystack/lamejs');
   const enc = new lamejs.Mp3Encoder(1, sampleRate, kbps);
@@ -51,12 +52,21 @@ export async function encodeMp3(
     samples[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
   }
   const blockSize = 1152;
+  const reportEvery = 200; // blocks between progress reports
   const parts: Uint8Array[] = [];
+  let sinceReport = 0;
   for (let i = 0; i < samples.length; i += blockSize) {
     const chunk = samples.subarray(i, i + blockSize);
     const buf = enc.encodeBuffer(chunk);
     if (buf.length > 0) parts.push(new Uint8Array(buf));
+    // Yield to the event loop periodically so long exports never freeze the UI.
+    if (++sinceReport >= reportEvery) {
+      sinceReport = 0;
+      onProgress?.(Math.min(1, i / samples.length));
+      await new Promise((r) => setTimeout(r));
+    }
   }
+  onProgress?.(1);
   const end = enc.flush();
   if (end.length > 0) parts.push(new Uint8Array(end));
   return new Blob(parts as BlobPart[], { type: 'audio/mpeg' });

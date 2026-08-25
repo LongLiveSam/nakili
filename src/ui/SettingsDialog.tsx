@@ -1,47 +1,97 @@
 import { useEffect, useRef, useState } from 'react';
+import { exportAllBackup } from '../core/services/ExportService';
 
 interface Props {
   open: boolean;
   onClose: () => void;
 }
 
-function loadVocab(): string {
+export const RECOGNITION_LANGUAGES = [
+  { code: 'en-US', label: 'English (US)' },
+  { code: 'en-GB', label: 'English (UK)' },
+  { code: 'es-ES', label: 'Español' },
+  { code: 'fr-FR', label: 'Français' },
+  { code: 'de-DE', label: 'Deutsch' },
+  { code: 'pt-BR', label: 'Português (BR)' },
+];
+
+function loadStored(key: string, fallback = ''): string {
   try {
-    return localStorage.getItem('nakili-vocab') ?? '';
+    return localStorage.getItem(key) ?? fallback;
   } catch {
-    return '';
+    return fallback;
+  }
+}
+
+function saveStored(key: string, value: string): void {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    /* storage unavailable */
   }
 }
 
 export function SettingsDialog({ open, onClose }: Props) {
   const ref = useRef<HTMLDialogElement>(null);
-  const [text, setText] = useState(loadVocab);
+  const [text, setText] = useState(loadStored('nakili-vocab'));
+  const [lang, setLang] = useState(loadStored('nakili-lang', 'en-US'));
   const [saved, setSaved] = useState(false);
+  const [backupStatus, setBackupStatus] = useState<string | null>(null);
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
     if (open && !el.open) {
-      setText(loadVocab());
+      setText(loadStored('nakili-vocab'));
+      setLang(loadStored('nakili-lang', 'en-US'));
       setSaved(false);
+      setBackupStatus(null);
       el.showModal();
     }
     if (!open && el.open) el.close();
   }, [open]);
 
   const save = () => {
-    try {
-      localStorage.setItem('nakili-vocab', text);
-    } catch {
-      /* storage unavailable */
-    }
+    saveStored('nakili-vocab', text);
+    saveStored('nakili-lang', lang);
     setSaved(true);
     setTimeout(() => onClose(), 600);
+  };
+
+  const runBackup = async () => {
+    try {
+      await exportAllBackup();
+      setBackupStatus('[BACKUP DOWNLOADED]');
+    } catch {
+      setBackupStatus('[ERROR: BACKUP FAILED]');
+    }
   };
 
   return (
     <dialog ref={ref} onClose={onClose} aria-label="Settings">
       <h2 style={{ marginTop: 0 }}>Settings</h2>
+
+      <h3>Recognition language</h3>
+      <label className="visually-hidden" htmlFor="lang">Recognition language</label>
+      <select
+        id="lang"
+        value={lang}
+        onChange={(e) => setLang(e.target.value)}
+        style={{
+          font: 'inherit',
+          background: 'var(--surface)',
+          color: 'var(--text-primary)',
+          border: '1px solid var(--border-visible)',
+          borderRadius: 8,
+          minHeight: 44,
+          padding: '0 12px',
+          width: '100%',
+        }}
+      >
+        {RECOGNITION_LANGUAGES.map((l) => (
+          <option key={l.code} value={l.code}>{l.label}</option>
+        ))}
+      </select>
 
       <h3>Vocabulary</h3>
       <p>
@@ -57,6 +107,19 @@ export function SettingsDialog({ open, onClose }: Props) {
         style={{ width: '100%', minHeight: 120 }}
         placeholder={'Kubernetes\nSchwarzschild\nNakili'}
       />
+
+      <h3>Data safety</h3>
+      <p>
+        Recordings live only in this browser and can be evicted under storage pressure.
+        Download a full backup (JSON + audio) regularly.
+      </p>
+      <button onClick={() => void runBackup()}>Export all data</button>
+      {backupStatus && (
+        <span className={backupStatus.startsWith('[ERROR') ? 'status-line error' : 'status-line'}
+          style={{ marginLeft: 12 }}>
+          {backupStatus}
+        </span>
+      )}
 
       <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 16 }}>
         <button onClick={onClose}>Cancel</button>
