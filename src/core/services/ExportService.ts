@@ -127,6 +127,11 @@ export async function exportAllBackup(): Promise<void> {
   const stamp = new Date().toISOString().slice(0, 10);
   const json = JSON.stringify(payload, null, 2);
   downloadBlob(new Blob([json], { type: 'application/json' }), `nakili-backup-${stamp}.json`);
+  try {
+    localStorage.setItem('nakili-last-backup', String(Date.now()));
+  } catch {
+    /* ignore */
+  }
 }
 
 function blobToDataURL(blob: Blob): Promise<string> {

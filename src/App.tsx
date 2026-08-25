@@ -89,6 +89,9 @@ export default function App() {
 
   useEffect(() => initHistorySync(), []);
 
+  // Ask the browser to exempt our local data from automatic eviction.
+  useEffect(() => { void navigator.storage?.persist?.().catch(() => {}); }, []);
+
   if (!speechSupported) {
     return (
       <AppShell>

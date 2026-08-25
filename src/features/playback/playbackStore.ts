@@ -149,13 +149,30 @@ export const usePlaybackStore = create<PlaybackState>((set, get) => ({
     } catch {
       /* jsdom: no media backend */
     }
+    el.loop = get().loop;
+    el.playbackRate = get().rate;
+    // Lock-screen / media-key controls (best-effort).
+    try {
+      if ('mediaSession' in navigator) {
+        const { getArticle } = await import('../../core/db/repositories');
+        const art = await getArticle(articleId);
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: `${art?.title ?? 'Recording'} — Clip ${index + 1}`,
+          artist: 'Nakili',
+        });
+        navigator.mediaSession.setActionHandler('pause', () => el.pause());
+        navigator.mediaSession.setActionHandler('play', () => { void el.play().catch(() => {}); });
+      }
+    } catch {
+      /* media session unsupported */
+    }
+    el.loop = get().loop;
+    el.playbackRate = get().rate;
     set({
       playingIndex: index,
       currentTimeSec: 0,
       durationSec: chunk.durationSec || el.duration || 0,
     });
-    el.loop = get().loop;
-    el.playbackRate = get().rate;
 
     try {
       await el.play();
