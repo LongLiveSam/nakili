@@ -88,7 +88,7 @@ describe('recording view', () => {
     const { speech, recorder } = makeFakes(true);
     __setServicesForTest(speech, recorder);
     render(<RecordingView />);
-    expect(await screen.findByText(/microphone access was denied/i)).toBeInTheDocument();
+    expect(await screen.findByRole('alert')).toHaveTextContent(/microphone access denied/i);
     expect(useRecordingStore.getState().status).toBe('idle');
     expect(recorder.start).not.toHaveBeenCalled();
   });

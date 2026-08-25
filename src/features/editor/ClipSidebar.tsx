@@ -25,6 +25,8 @@ function fmt(sec: number): string {
   return `${m}:${String(s).padStart(2, '0')}`;
 }
 
+const SEGMENTS = 24;
+
 function SeekSlider({
   index, fraction, onSeek,
 }: {
@@ -34,18 +36,26 @@ function SeekSlider({
 }) {
   const currentTimeSec = usePlaybackStore((s) => s.currentTimeSec);
   const durationSec = usePlaybackStore((s) => s.durationSec);
-  const value = fraction ?? (durationSec > 0 ? currentTimeSec / durationSec : 0);
+  const progress = fraction ?? (durationSec > 0 ? currentTimeSec / durationSec : 0);
+  const clamped = Math.max(0, Math.min(1, progress));
+  const filled = Math.round(clamped * SEGMENTS);
   return (
-    <input
-      type="range"
-      min={0}
-      max={1}
-      step={0.01}
-      value={value}
-      aria-label={`Seek within clip ${index + 1}`}
-      onChange={(e) => onSeek(Number(e.target.value))}
-      style={{ width: '100%' }}
-    />
+    <div className="seek-wrap">
+      <div className="seek-segments" aria-hidden="true">
+        {Array.from({ length: SEGMENTS }, (_, i) => (
+          <i key={i} className={i < filled ? 'on' : undefined} />
+        ))}
+      </div>
+      <input
+        type="range"
+        min={0}
+        max={1}
+        step={0.01}
+        value={clamped}
+        aria-label={`Seek within clip ${index + 1}`}
+        onChange={(e) => onSeek(Number(e.target.value))}
+      />
+    </div>
   );
 }
 
@@ -53,6 +63,7 @@ export function ClipSidebar({
   chunks, activeClipIndex, approximate, playingIndex, progressFraction, panelOpen, onTogglePlay, onSeek,
 }: Props) {
   const activeRef = useRef<HTMLLIElement>(null);
+  const error = usePlaybackStore((s) => s.error);
 
   useEffect(() => {
     activeRef.current?.scrollIntoView?.({ block: 'nearest' });
@@ -65,7 +76,12 @@ export function ClipSidebar({
       data-open={panelOpen ? 'true' : 'false'}
     >
       <h2>Clips</h2>
-      <ul role="list" style={{ listStyle: 'none', padding: 0, display: 'grid', gap: 4 }}>
+      {error && (
+        <p className="status-line error" role="alert" style={{ margin: '0 0 var(--space-sm)' }}>
+          {error}
+        </p>
+      )}
+      <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
         {chunks.map((c) => {
           const isActive = c.index === activeClipIndex;
           const isPlaying = c.index === playingIndex;
@@ -73,25 +89,18 @@ export function ClipSidebar({
             <li key={c.index} ref={isActive ? activeRef : undefined}>
               <button
                 aria-current={isActive ? 'true' : undefined}
-                className={isActive ? 'clip-row-active' : undefined}
+                className={`clip-row${isActive ? ' clip-row-active' : ''}`}
                 aria-label={
                   `Clip ${c.index + 1}, ${fmt(c.startTimeSec)} to ${fmt(c.endTimeSec)}` +
                   (isPlaying ? ', playing' : '') +
                   (isActive && approximate ? ', approximately matches cursor' : '')
                 }
-                style={{
-                  width: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: 8,
-                }}
                 onClick={() => onTogglePlay(c.index)}
               >
                 <span>Clip {c.index + 1}</span>
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'var(--fg-subtle)' }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                   {isActive && approximate && <span className="approx-chip">~</span>}
-                  {fmt(c.startTimeSec)}–{fmt(c.endTimeSec)}
+                  <span className="clip-time">{fmt(c.startTimeSec)}–{fmt(c.endTimeSec)}</span>
                   {isPlaying ? <PauseIcon /> : <PlayIcon />}
                 </span>
               </button>

@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useEditorStore } from './editorStore';
 import { useAppStore } from '../../ui/appStore';
-import { useToastStore } from '../../ui/toastStore';
 import { exportTranscript } from '../../core/services/ExportService';
 import { getChunks, putArticle } from '../../core/db/repositories';
 import { ClipSidebar, type ClipRowData } from './ClipSidebar';
@@ -13,13 +12,13 @@ import { ArrowLeftIcon } from '../../ui/icons';
 export default function EditorView() {
   const articleId = useAppStore((s) => s.activeArticleId)!;
   const navigate = useAppStore((s) => s.navigate);
-  const { article, load, setText, setCursor, activeClipIndex, approximate, saved } =
+  const { article, load, setText, setCursor, activeClipIndex, approximate, saved, saveError } =
     useEditorStore((s) => s);
   const playingIndex = usePlaybackStore((s) => s.playingIndex);
   const toggle = usePlaybackStore((s) => s.toggle);
   const seek = usePlaybackStore((s) => s.seek);
-  const showToast = useToastStore((s) => s.showToast);
   const [chunks, setChunks] = useState<ClipRowData[]>([]);
+  const [exportStatus, setExportStatus] = useState<string | null>(null);
   const taRef = useRef<HTMLTextAreaElement>(null);
   const [renaming, setRenaming] = useState(false);
   const [titleDraft, setTitleDraft] = useState('');
@@ -40,8 +39,18 @@ export default function EditorView() {
     if (useEditorStore.getState().activeClipIndex !== null) setPanelOpen(true);
   };
 
+  const handleShare = async () => {
+    try {
+      await exportTranscript(article!.id);
+      setExportStatus('[DOWNLOADED]');
+      setTimeout(() => setExportStatus(null), 4000);
+    } catch {
+      setExportStatus('[ERROR: EXPORT FAILED]');
+    }
+  };
+
   if (!article) {
-    return <main className="view"><p>Loading…</p></main>;
+    return <main className="view"><p className="label">[LOADING…]</p></main>;
   }
 
   return (
@@ -54,25 +63,22 @@ export default function EditorView() {
                 <ArrowLeftIcon /> Recordings
               </span>
             </button>
-            <h1>{article.title}</h1>
+            <h1 style={{ margin: 0 }}>{article.title}</h1>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-              <span aria-live="polite" style={{ color: 'var(--fg-subtle)' }}>
-                {saved ? 'Saved' : 'Saving…'}
-              </span>
-              <button
-                aria-label="Share"
-                onClick={async () => {
-                  try {
-                    await exportTranscript(article.id);
-                    showToast('Transcript downloaded');
-                  } catch {
-                    showToast('Export failed');
-                  }
-                }}
-              >
-                Share
-              </button>
-              <button aria-label="Rename" onClick={() => { setTitleDraft(article.title); setRenaming(true); }}>
+              {saveError ? (
+                <span role="alert" className="status-line error">[AUTOSAVE FAILED — WILL RETRY]</span>
+              ) : (
+                <span aria-live="polite" className="status-line success">
+                  {saved ? '[SAVED]' : '[SAVING…]'}
+                </span>
+              )}
+              {exportStatus && (
+                <span className={exportStatus.startsWith('[ERROR') ? 'status-line error' : 'status-line'}>
+                  {exportStatus}
+                </span>
+              )}
+              <button onClick={() => void handleShare()}>Share</button>
+              <button onClick={() => { setTitleDraft(article.title); setRenaming(true); }}>
                 Rename
               </button>
             </div>

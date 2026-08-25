@@ -1,12 +1,12 @@
 import { create } from 'zustand';
 import { getAudioBlob, getChunks } from '../../core/db/repositories';
 import { useAppStore } from '../../ui/appStore';
-import { useToastStore } from '../../ui/toastStore';
 
 interface PlaybackState {
   playingIndex: number | null;
   currentTimeSec: number;
   durationSec: number;
+  error: string | null;
   toggle: (index: number) => Promise<void>;
   seek: (fraction: number) => void;
 }
@@ -29,9 +29,9 @@ function ensureAudio(): HTMLAudioElement {
   audioEl.addEventListener('error', () => {
     const detail = audioEl?.error
       ? `${audioEl.error.message || audioEl.error.code}`
-      : 'unknown';
-    useToastStore.getState().showToast(`Playback error: ${detail}`);
-    usePlaybackStore.setState({ playingIndex: null });
+      : 'UNKNOWN';
+    // Inline status — no toasts in the Nothing system.
+    usePlaybackStore.setState({ playingIndex: null, error: `[PLAYBACK ERROR: ${detail.toUpperCase()}]` });
   });
   return audioEl;
 }
@@ -40,6 +40,7 @@ export const usePlaybackStore = create<PlaybackState>((set, get) => ({
   playingIndex: null,
   currentTimeSec: 0,
   durationSec: 0,
+  error: null,
 
   toggle: async (index) => {
     const el = ensureAudio();
@@ -59,6 +60,8 @@ export const usePlaybackStore = create<PlaybackState>((set, get) => ({
 
     const blob = await getAudioBlob(chunk.blobKey);
     if (!blob) return;
+
+    set({ error: null });
 
     if (currentUrl) URL.revokeObjectURL(currentUrl);
     currentUrl = URL.createObjectURL(blob);

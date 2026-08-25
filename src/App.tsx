@@ -1,6 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useAppStore, initHistorySync } from './ui/appStore';
-import { ToastHost } from './ui/Toast';
 import { UnsupportedBrowserNotice } from './ui/UnsupportedBrowserNotice';
 import { speechSupported } from './ui/speechSupport';
 import { HelpDialog } from './ui/HelpDialog';
@@ -9,9 +8,36 @@ import RecordingView from './features/recording/RecordingView';
 import EditorView from './features/editor/EditorView';
 import './features/views.css';
 
+function readStoredTheme(): 'dark' | 'light' {
+  try {
+    return localStorage.getItem('nakili-theme') === 'light' ? 'light' : 'dark';
+  } catch {
+    return 'dark';
+  }
+}
+
+function writeStoredTheme(theme: 'dark' | 'light'): void {
+  try {
+    localStorage.setItem('nakili-theme', theme);
+  } catch {
+    /* storage unavailable (private mode / tests) */
+  }
+}
+
 function AppShell({ children }: { children: React.ReactNode }) {
   const [helpOpen, setHelpOpen] = useState(false);
   const navigate = useAppStore((s) => s.navigate);
+  const view = useAppStore((s) => s.view);
+  const [theme, setTheme] = useState<'dark' | 'light'>(
+    () => (document.documentElement.getAttribute('data-theme') as 'dark' | 'light') || readStoredTheme(),
+  );
+
+  const toggleTheme = () => {
+    const next = theme === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    writeStoredTheme(next);
+    setTheme(next);
+  };
 
   return (
     <div className="app-frame">
@@ -19,8 +45,10 @@ function AppShell({ children }: { children: React.ReactNode }) {
         <button className="brand" onClick={() => navigate('home')} aria-label="Nakili home">
           Nakili
         </button>
-        <nav style={{ display: 'flex', gap: 8, alignItems: 'center' }} aria-label="Site">
-          <button onClick={() => navigate('home')}>Recordings</button>
+        <nav className="header-nav" aria-label="Site">
+          <button aria-current={view === 'home' ? 'page' : undefined} onClick={() => navigate('home')}>
+            Recordings
+          </button>
           <button onClick={() => setHelpOpen(true)}>Help</button>
         </nav>
       </header>
@@ -28,16 +56,22 @@ function AppShell({ children }: { children: React.ReactNode }) {
       {children}
 
       <footer className="app-footer">
-        <span>Nakili — private, local-first dictation. Nothing leaves your browser.</span>
-        <span>
+        <span>Local-first dictation. Nothing leaves your browser.</span>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 12 }}>
           <a href="mailto:culturedrabbit@gmail.com">Contact</a>
-          {' · '}
+          <button
+            className="ghost"
+            onClick={toggleTheme}
+            aria-label={`Theme: ${theme}. Activate to switch`}
+            style={{ minHeight: 32, padding: '4px 12px' }}
+          >
+            Theme: {theme}
+          </button>
           <button className="link-button" onClick={() => setHelpOpen(true)}>Help</button>
         </span>
       </footer>
 
       <HelpDialog open={helpOpen} onClose={() => setHelpOpen(false)} />
-      <ToastHost />
     </div>
   );
 }

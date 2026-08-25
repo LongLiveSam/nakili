@@ -1,9 +1,8 @@
 import 'fake-indexeddb/auto';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import App from '../App';
-import { useToastStore } from './toastStore';
 import { useAppStore } from './appStore';
 
 describe('app shell', () => {
@@ -17,7 +16,7 @@ describe('app shell', () => {
       };
     }
     useAppStore.setState({ view: 'home', activeArticleId: null });
-    useToastStore.setState({ toasts: [] });
+    document.documentElement.removeAttribute('data-theme');
   });
 
   it('shows home view by default', () => {
@@ -47,20 +46,16 @@ describe('app shell', () => {
     vi.doUnmock('./speechSupport');
   });
 
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
-  it('renders and auto-dismisses toasts after 4 s', async () => {
-    vi.useFakeTimers();
+  it('toggles dark and light themes', async () => {
     render(<App />);
-    useToastStore.getState().showToast('Saved');
-    expect(document.querySelector('.toast')).toHaveTextContent('Saved');
-    vi.advanceTimersByTime(4100);
-    await waitFor(() => expect(document.querySelector('.toast')).toBeNull());
+    const before = document.documentElement.getAttribute('data-theme') ?? 'dark';
+    const toggle = screen.getByRole('button', { name: new RegExp(`theme: ${before}`, 'i') });
+    await userEvent.click(toggle);
+    expect(document.documentElement.getAttribute('data-theme')).not.toBe(before);
+    expect(screen.getByRole('button', { name: new RegExp(`theme: (?!${before})`, 'i') })).toBeInTheDocument();
   });
 
-  it('navigates to record view on New recording (placeholder creates id)', async () => {
+  it('navigates to record view on New recording', async () => {
     render(<App />);
     const buttons = await screen.findAllByRole('button', { name: /new recording/i });
     await userEvent.click(buttons[0]);

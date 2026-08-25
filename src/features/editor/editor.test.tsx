@@ -7,7 +7,6 @@ import { useEditorStore } from './editorStore';
 import { db } from '../../core/db/db';
 import { putArticle, saveSessionAudio, putSegments } from '../../core/db/repositories';
 import { useAppStore } from '../../ui/appStore';
-import { useToastStore } from '../../ui/toastStore';
 
 // jsdom does not implement <dialog>.showModal; minimal stub (test-only).
 if (!HTMLDialogElement.prototype.showModal) {
@@ -90,7 +89,7 @@ describe('editor', () => {
     vi.useRealTimers();
   });
 
-  it('shows a toast and stays unsaved when autosave fails', async () => {
+  it('shows inline error status and stays unsaved when autosave fails', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     const putSpy = vi.spyOn(db.articles, 'put').mockRejectedValueOnce(new Error('quota exceeded'));
     try {
@@ -101,9 +100,8 @@ describe('editor', () => {
 
       await vi.advanceTimersByTimeAsync(600);
       expect(useEditorStore.getState().saved).toBe(false);
-      expect(
-        useToastStore.getState().toasts.some((t) => t.message === 'Autosave failed — will retry on next edit.'),
-      ).toBe(true);
+      expect(useEditorStore.getState().saveError).toBe(true);
+      expect(screen.getByText('[AUTOSAVE FAILED — WILL RETRY]')).toBeInTheDocument();
     } finally {
       putSpy.mockRestore();
       vi.useRealTimers();

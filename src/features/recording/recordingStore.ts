@@ -6,7 +6,6 @@ import {
   saveSessionAudio, putArticle, getArticle, putSegments,
 } from '../../core/db/repositories';
 import { useAppStore } from '../../ui/appStore';
-import { useToastStore } from '../../ui/toastStore';
 
 let speech: SpeechService | null = null;
 let recorder: RecorderService | null = null;
@@ -30,6 +29,7 @@ interface RecordingState {
   interimText: string;
   finals: FinalResult[];
   errorMessage: string | null;
+  recorderNotice: string | null;
   start: () => Promise<void>;
   stopAndSave: (articleId: string) => Promise<void>;
 }
@@ -40,17 +40,28 @@ export const useRecordingStore = create<RecordingState>((set, get) => ({
   interimText: '',
   finals: [],
   errorMessage: null,
+  recorderNotice: null,
 
   start: async () => {
     if (get().status === 'recording') return;
-    set({ errorMessage: null, finals: [], interimText: '', elapsedSec: 0 });
+    // Claim 'recording' synchronously so StrictMode double-effects cannot
+    // double-start services before the first await resolves.
+    set({
+      status: 'recording',
+      errorMessage: null,
+      recorderNotice: null,
+      finals: [],
+      interimText: '',
+      elapsedSec: 0,
+    });
     if (!speech || !recorder) makeServices();
     try {
       await recorder!.requestMicrophone();
     } catch {
       set({
+        status: 'idle',
         errorMessage:
-          'Microphone access was denied. Allow microphone permission for this site in your browser settings, then try again.',
+          '[ERROR: MICROPHONE ACCESS DENIED — ALLOW MIC FOR THIS SITE IN BROWSER SETTINGS, THEN RETRY]',
       });
       speech = null;
       recorder = null;
@@ -64,12 +75,11 @@ export const useRecordingStore = create<RecordingState>((set, get) => ({
       }));
     speech!.onError = (err, fatal) => {
       if (fatal) {
-        set({ errorMessage: `Speech recognition error: ${err}. Audio keeps recording; live text paused.` });
-        useToastStore.getState().showToast('Speech recognition error. Audio keeps recording.');
+        set({ errorMessage: `[ERROR: SPEECH RECOGNITION ${err.toUpperCase()} — AUDIO KEEPS RECORDING, LIVE TEXT PAUSED]` });
       }
     };
     recorder!.onError = () => {
-      useToastStore.getState().showToast('Audio recording error — audio captured so far is kept.');
+      set({ recorderNotice: '[NOTICE: AUDIO RECORDING ERROR — CAPTURED AUDIO IS KEPT]' });
     };
     recorder!.start();
     speech!.start();

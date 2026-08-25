@@ -29,6 +29,7 @@ export default function RecordingView() {
   }, [start]);
 
   const finalText = finals.map((f) => f.text).join(' ');
+  const recorderNotice = useRecordingStore((s) => s.recorderNotice);
 
   return (
     <main className="view">
@@ -40,44 +41,54 @@ export default function RecordingView() {
             </span>
           </button>
         )}
-        <h1 style={{ display: 'inline-flex', alignItems: 'center', gap: 10, margin: 0 }}>
+        <span className="label" style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
           {status === 'recording' ? (
             <>
               <span className="rec-dot" aria-hidden="true" />
-              Recording · <time className="timer">{formatClock(elapsedSec)}</time>
+              Recording
             </>
           ) : (
-            <>
-              Ready · <time className="timer">{formatClock(elapsedSec)}</time>
-            </>
+            'Ready'
           )}
-        </h1>
+        </span>
         {status === 'recording' ? (
-          <button className="cta" onClick={() => void stopAndSave(articleId)}>
+          <button className="primary" onClick={() => void stopAndSave(articleId)}>
             Stop
           </button>
         ) : (
-          <button className="cta" onClick={() => void start()}>
+          <button className="primary" onClick={() => void start()}>
             Start recording
           </button>
         )}
       </div>
 
+      <p className="timer" style={{ margin: 'var(--space-xl) 0', textAlign: 'center' }} aria-hidden="true">
+        {formatClock(elapsedSec)}
+      </p>
+      <span className="visually-hidden">{`Elapsed ${formatClock(elapsedSec)}`}</span>
+
       {errorMessage && (
-        <p role="alert" style={{ color: 'var(--danger)' }}>{errorMessage}</p>
+        <p role="alert" className="status-line error" style={{ textAlign: 'center' }}>{errorMessage}</p>
+      )}
+      {recorderNotice && (
+        <p className="status-line" style={{ textAlign: 'center' }}>{recorderNotice}</p>
       )}
 
       <section
         aria-label="Live transcript"
         aria-live="polite"
         style={{
-          border: '1px solid var(--border)', borderRadius: 'var(--radius)',
-          padding: 16, minHeight: 300, whiteSpace: 'pre-wrap',
+          border: '1px solid var(--border)',
+          borderRadius: 12,
+          padding: 'var(--space-md)',
+          minHeight: 300,
+          whiteSpace: 'pre-wrap',
+          background: 'var(--surface)',
         }}
       >
         <p style={{ margin: 0 }}>
           {finalText}{finalText && ' '}
-          <span style={{ color: 'var(--fg-subtle)' }}>{interimText}</span>
+          <span style={{ color: 'var(--text-secondary)' }}>{interimText}</span>
         </p>
       </section>
     </main>
