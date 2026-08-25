@@ -108,8 +108,14 @@ export default function LibraryView() {
                   <button onClick={async () => { setMenuFor(null); try { await exportTranscript(a.id); setStatus('[DOWNLOADED TRANSCRIPT]'); } catch { setStatus('[ERROR: EXPORT FAILED]'); } }}>
                     Export text
                   </button>
-                  <button onClick={async () => { setMenuFor(null); try { await exportFullRecording(a.id); setStatus('[DOWNLOADED AUDIO]'); } catch { setStatus('[ERROR: EXPORT FAILED]'); } }}>
-                    Export audio
+                  <button onClick={async () => { setMenuFor(null); try { await exportFullRecording(a.id, 'mp3'); setStatus('[DOWNLOADED AUDIO · MP3]'); } catch { setStatus('[ERROR: EXPORT FAILED]'); } }}>
+                    Export audio · MP3
+                  </button>
+                  <button onClick={async () => { setMenuFor(null); try { await exportFullRecording(a.id, 'wav'); setStatus('[DOWNLOADED AUDIO · WAV]'); } catch { setStatus('[ERROR: EXPORT FAILED]'); } }}>
+                    Export audio · WAV
+                  </button>
+                  <button onClick={async () => { setMenuFor(null); try { await exportFullRecording(a.id, 'webm'); setStatus('[DOWNLOADED AUDIO · ORIGINAL]'); } catch { setStatus('[ERROR: EXPORT FAILED]'); } }}>
+                    Export audio · Original
                   </button>
                   <button className="danger" onClick={() => { setDeleting(a); setMenuFor(null); }}>
                     Delete

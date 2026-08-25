@@ -26,7 +26,21 @@ Requires **Chrome or Edge** (uses the Web Speech API).
 
 Everything stays in your browser's IndexedDB. No account, no server, no sync.
 Speech-to-text is your browser's own service. Clearing site data deletes all
-recordings.
+recordings. Audio export (MP3/WAV) is encoded locally via lamejs — nothing
+is uploaded.
+
+## Design system
+
+Nothing design language (`Nothing design` skill): monochrome, typographic,
+industrial — Doto / Space Grotesk / Space Mono, OLED-dark + paper-light themes,
+segmented progress bars, inline `[STATUS]` text instead of toasts.
+
+## Roadmap (deferred by decision)
+
+- Voice-activity auto-pause during long silences.
+- Manual audio-only recording mode for browsers without Web Speech API.
+- Opt-in cloud re-transcription ("enhance accuracy") using a user-supplied
+  API key — intentionally not built to keep the app fully free and private.
 
 ## Contact
 

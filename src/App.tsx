@@ -3,6 +3,7 @@ import { useAppStore, initHistorySync } from './ui/appStore';
 import { UnsupportedBrowserNotice } from './ui/UnsupportedBrowserNotice';
 import { speechSupported } from './ui/speechSupport';
 import { HelpDialog } from './ui/HelpDialog';
+import { SettingsDialog } from './ui/SettingsDialog';
 import LibraryView from './features/library/LibraryView';
 import RecordingView from './features/recording/RecordingView';
 import EditorView from './features/editor/EditorView';
@@ -26,6 +27,7 @@ function writeStoredTheme(theme: 'dark' | 'light'): void {
 
 function AppShell({ children }: { children: React.ReactNode }) {
   const [helpOpen, setHelpOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const navigate = useAppStore((s) => s.navigate);
   const view = useAppStore((s) => s.view);
   const [theme, setTheme] = useState<'dark' | 'light'>(
@@ -49,6 +51,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
           <button aria-current={view === 'home' ? 'page' : undefined} onClick={() => navigate('home')}>
             Recordings
           </button>
+          <button onClick={() => setSettingsOpen(true)}>Settings</button>
           <button onClick={() => setHelpOpen(true)}>Help</button>
         </nav>
       </header>
@@ -72,6 +75,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
       </footer>
 
       <HelpDialog open={helpOpen} onClose={() => setHelpOpen(false)} />
+      <SettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </div>
   );
 }

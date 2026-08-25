@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
-import { useRecordingStore } from './recordingStore';
+import { useRecordingStore, getActiveAnalyser } from './recordingStore';
+import { LevelMeter } from './LevelMeter';
 import { useAppStore } from '../../ui/appStore';
 import { ArrowLeftIcon } from '../../ui/icons';
 
@@ -66,6 +67,10 @@ export default function RecordingView() {
         {formatClock(elapsedSec)}
       </p>
       <span className="visually-hidden">{`Elapsed ${formatClock(elapsedSec)}`}</span>
+
+      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 'var(--space-lg)' }}>
+        <LevelMeter getAnalyser={getActiveAnalyser} />
+      </div>
 
       {errorMessage && (
         <p role="alert" className="status-line error" style={{ textAlign: 'center' }}>{errorMessage}</p>

@@ -18,8 +18,26 @@ export function __setServicesForTest(s: SpeechService, r: RecorderService): void
   recorder = r;
 }
 
+/** Live mic analyser for the level meter (null when not recording). */
+export function getActiveAnalyser(): AnalyserNode | null {
+  return recorder?.getAnalyser?.() ?? null;
+}
+
+function loadVocabulary(): string[] {
+  try {
+    return localStorage
+      .getItem('nakili-vocab')
+      ?.split('\n')
+      .map((w) => w.trim())
+      .filter(Boolean) ?? [];
+  } catch {
+    return [];
+  }
+}
+
 function makeServices(): void {
   speech = new SpeechService();
+  speech.setVocabulary(loadVocabulary());
   recorder = new RecorderService();
 }
 

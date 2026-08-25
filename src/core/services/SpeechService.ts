@@ -7,6 +7,7 @@ export interface RecognitionLike {
   lang: string;
   continuous: boolean;
   interimResults: boolean;
+  grammars?: unknown;
   start(): void;
   stop(): void;
   abort(): void;
@@ -18,6 +19,10 @@ export interface RecognitionLike {
 const RECOVERABLE = new Set(['no-speech', 'network', 'audio-capture', 'aborted']);
 
 type RecognitionCtor = new () => RecognitionLike;
+
+interface GrammarListLike {
+  addFromString(grammar: string, weight?: number): void;
+}
 
 function defaultCreateRecognition(): RecognitionLike {
   const w = window as unknown as {
@@ -47,11 +52,34 @@ export class SpeechService {
   private startedAt = 0;
   private pendingRestart = false;
   private restartError: string | null = null;
+  private vocabulary: string[] = [];
   stopRequested = false;
 
   constructor(opts: { createRecognition?: () => RecognitionLike; now?: () => number } = {}) {
     this.now = opts.now ?? (() => performance.now() / 1000);
     this.createRecognition = opts.createRecognition ?? defaultCreateRecognition;
+  }
+
+  /** Custom terms handed to the recognizer via SpeechGrammarList when supported. */
+  setVocabulary(words: string[]): void {
+    this.vocabulary = words.map((w) => w.trim()).filter(Boolean);
+    if (this.recognition) this.applyVocabulary(this.recognition);
+  }
+
+  private applyVocabulary(rec: RecognitionLike): void {
+    if (this.vocabulary.length === 0) return;
+    const w = window as unknown as { SpeechGrammarList?: new () => GrammarListLike; webkitSpeechGrammarList?: new () => GrammarListLike };
+    const Ctor = w.SpeechGrammarList ?? w.webkitSpeechGrammarList;
+    if (!Ctor) return; // best-effort only; engine may ignore
+    try {
+      const terms = this.vocabulary.map((t) => `"${t.replace(/[";]/g, '')}"`).join(' | ');
+      const grammar = `#JSGF V1.0; grammar nakili; public <terms> = ${terms} ;`;
+      const list = new Ctor();
+      list.addFromString(grammar, 1);
+      rec.grammars = list;
+    } catch {
+      /* grammar construction is optional */
+    }
   }
 
   start(): void {
@@ -66,6 +94,7 @@ export class SpeechService {
         throw new Error('unsupported');
       }
     }
+    this.applyVocabulary(this.recognition);
     try {
       this.recognition.start();
     } catch (err) {

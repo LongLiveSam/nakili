@@ -35,7 +35,38 @@ export async function exportTranscript(articleId: string): Promise<void> {
   await shareOrDownload(blob, `${slugify(article.title)}.txt`);
 }
 
-export async function exportFullRecording(articleId: string): Promise<void> {
+export type AudioExportFormat = 'mp3' | 'wav' | 'webm';
+
+/** Decode every chunk and concatenate as mono PCM for re-encoding. */
+async function decodeConcat(blobs: Blob[]): Promise<{ pcm: Float32Array; sampleRate: number }> {
+  const Ctx = window.AudioContext;
+  if (!Ctx) throw new Error('AUDIO DECODE UNAVAILABLE');
+  const ctx = new Ctx();
+  try {
+    let total = 0;
+    const buffers: AudioBuffer[] = [];
+    for (const b of blobs) {
+      const buf = await ctx.decodeAudioData(await b.arrayBuffer());
+      buffers.push(buf);
+      total += buf.length;
+    }
+    const sampleRate = buffers[0].sampleRate;
+    const pcm = new Float32Array(total);
+    let off = 0;
+    for (const b of buffers) {
+      pcm.set(b.getChannelData(0), off);
+      off += b.length;
+    }
+    return { pcm, sampleRate };
+  } finally {
+    void ctx.close().catch(() => {});
+  }
+}
+
+export async function exportFullRecording(
+  articleId: string,
+  format: AudioExportFormat = 'webm',
+): Promise<void> {
   const { getChunks, getAudioBlob } = await import('../db/repositories');
   const [{ getArticle }, chunks] = await Promise.all([
     import('../db/repositories').then((m) => ({ getArticle: m.getArticle })),
@@ -49,6 +80,22 @@ export async function exportFullRecording(articleId: string): Promise<void> {
     const b = await getAudioBlob(c.blobKey);
     if (b) blobs.push(b);
   }
-  const full = new Blob(blobs, { type: 'audio/webm' });
-  await shareOrDownload(full, `${slugify(article.title)}.webm`);
+
+  if (format === 'mp3' || format === 'wav') {
+    // Re-encode locally: decode WebM/Opus (or MP4/AAC) → mono PCM → encoder.
+    const { pcm, sampleRate } = await decodeConcat(blobs);
+    const { encodeWav, encodeMp3 } = await import('./audioEncoders');
+    if (format === 'wav') {
+      await shareOrDownload(encodeWav([pcm], sampleRate), `${slugify(article.title)}.wav`);
+    } else {
+      await shareOrDownload(await encodeMp3(pcm, sampleRate, 128), `${slugify(article.title)}.mp3`);
+    }
+    return;
+  }
+
+  // Original container — keep whatever the recorder produced.
+  const firstType = blobs[0]?.type ?? 'audio/webm';
+  const ext = firstType.includes('mp4') ? 'm4a' : 'webm';
+  const full = new Blob(blobs, { type: firstType });
+  await shareOrDownload(full, `${slugify(article.title)}.${ext}`);
 }

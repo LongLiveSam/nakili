@@ -36,18 +36,31 @@ export class RecorderService {
   private chunks: RecordedChunk[] = [];
   private timerId: ReturnType<typeof setInterval> | null = null;
   private running = false;
+  private audioCtx: AudioContext | null = null;
+  private analyser: AnalyserNode | null = null;
 
   constructor(deps: RecorderDeps = {}) {
     this.getUserMedia =
       deps.getUserMedia ??
-      (() => navigator.mediaDevices.getUserMedia({ audio: true }));
+      (() =>
+        navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+          },
+        }));
     this.createRecorder =
       deps.createRecorder ??
       ((stream) => {
-        // Pin the container/codec so stored chunks are self-describing and
-        // playable by <audio> without sniffing.
+        // Prefer AAC/MP4 (wide compatibility), then WebM/Opus, then browser default.
+        const preferred = ['audio/mp4', 'audio/webm;codecs=opus'];
+        const mimeType =
+          typeof MediaRecorder !== 'undefined'
+            ? preferred.find((t) => MediaRecorder.isTypeSupported(t))
+            : undefined;
         try {
-          return new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' }) as unknown as MediaRecorderLike;
+          return new MediaRecorder(stream, mimeType ? { mimeType } : undefined) as unknown as MediaRecorderLike;
         } catch {
           return new MediaRecorder(stream) as unknown as MediaRecorderLike;
         }
@@ -58,6 +71,20 @@ export class RecorderService {
 
   async requestMicrophone(): Promise<void> {
     this.stream = await this.getUserMedia();
+    // Level meter tap (instrument widget on the recording screen).
+    try {
+      this.audioCtx = new AudioContext();
+      const source = this.audioCtx.createMediaStreamSource(this.stream);
+      this.analyser = this.audioCtx.createAnalyser();
+      this.analyser.fftSize = 256;
+      source.connect(this.analyser);
+    } catch {
+      this.analyser = null;
+    }
+  }
+
+  getAnalyser(): AnalyserNode | null {
+    return this.analyser;
   }
 
   start(): void {
@@ -83,6 +110,9 @@ export class RecorderService {
   releaseStream(): void {
     this.stream?.getTracks().forEach((t) => t.stop());
     this.stream = null;
+    this.analyser = null;
+    void this.audioCtx?.close().catch(() => {});
+    this.audioCtx = null;
   }
 
   private beginChunk(index: number): void {
