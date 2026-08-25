@@ -46,6 +46,15 @@ export default function RecordingView() {
     };
   }, []);
 
+  // Hidden tabs get throttled by browsers — warn so users keep the tab visible.
+  const [hiddenNotice, setHiddenNotice] = useState(false);
+  useEffect(() => {
+    if (status !== 'recording') { setHiddenNotice(false); return; }
+    const onVis = () => setHiddenNotice(document.visibilityState === 'hidden');
+    document.addEventListener('visibilitychange', onVis);
+    return () => document.removeEventListener('visibilitychange', onVis);
+  }, [status]);
+
   // Keyboard shortcut: Ctrl+Shift+D starts/stops dictation.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -125,6 +134,11 @@ export default function RecordingView() {
       {offline && (
         <p role="status" className="status-line error" style={{ textAlign: 'center' }}>
           [OFFLINE — SPEECH RECOGNITION NEEDS A CONNECTION; AUDIO STILL RECORDS]
+        </p>
+      )}
+      {hiddenNotice && (
+        <p role="status" className="status-line error" style={{ textAlign: 'center' }}>
+          [TAB HIDDEN — LIVE TEXT MAY PAUSE; AUDIO STILL RECORDS. RETURN TO THIS TAB.]
         </p>
       )}
 

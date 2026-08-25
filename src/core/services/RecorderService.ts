@@ -52,6 +52,8 @@ export class RecorderService {
             echoCancellation: true,
             noiseSuppression: true,
             autoGainControl: true,
+            channelCount: 1,
+            sampleRate: 16000, // hint only — browsers override when unsupported
           },
         }));
     this.createRecorder =

@@ -10,6 +10,16 @@ function makeFakeRecognition() {
   return rec;
 }
 
+/** Service whose scheduled restarts run synchronously and record their delays. */
+function makeSyncSvc(rec: RecognitionLike, delays: number[], now: () => number = () => clock) {
+  const svc = new SpeechService({
+    createRecognition: () => rec,
+    now,
+    schedule: (ms, cb) => { delays.push(ms); cb(); },
+  });
+  return svc;
+}
+
 function resultEvent(items: Array<{ text: string; isFinal: boolean }>): RecognitionEventLike {
   const results = items.map((i) => Object.assign([{ transcript: i.text }], { isFinal: i.isFinal }));
   return { resultIndex: 0, results: results as never };
@@ -39,10 +49,34 @@ describe('SpeechService', () => {
     expect(finals).toEqual([['hello', 2.5]]);
   });
 
+  it('throttles interim callbacks to ~7/s but always emits finals', () => {
+    const rec = makeFakeRecognition();
+    let t = 1000;
+    const svc = new SpeechService({ createRecognition: () => rec, now: () => t });
+    const interims: string[] = [];
+    const finals: string[] = [];
+    svc.onInterim = (x) => interims.push(x);
+    svc.onFinal = (x) => finals.push(x);
+
+    svc.start();
+    rec.onresult!(resultEvent([{ text: 'a', isFinal: false }]));
+    t += 0.05;
+    rec.onresult!(resultEvent([{ text: 'ab', isFinal: false }])); // inside window — held
+    t += 0.05;
+    rec.onresult!(resultEvent([{ text: 'abc', isFinal: false }])); // still inside
+    expect(interims).toEqual(['a']);
+
+    t += 0.2;
+    rec.onresult!(resultEvent([{ text: 'abcd', isFinal: true }]));
+    expect(interims).toEqual(['a']);
+    expect(finals).toEqual(['abcd']);
+  });
+
   it('restarts after recoverable errors unless stopped', () => {
     clock = 1000;
     const rec = makeFakeRecognition();
-    const svc = new SpeechService({ createRecognition: () => rec, now: () => clock });
+    const delays: number[] = [];
+    const svc = makeSyncSvc(rec, delays);
     svc.start();
     (rec.start as ReturnType<typeof vi.fn>).mockClear();
 
@@ -51,11 +85,26 @@ describe('SpeechService', () => {
 
     rec.onend!();
     expect(rec.start).toHaveBeenCalledTimes(1);
+    expect(delays).toEqual([300]); // brief pause for flaky engines
 
     svc.stop();
     expect(svc.stopRequested).toBe(true);
     rec.onerror!({ error: 'network' });
     rec.onend!();
+    expect(rec.start).toHaveBeenCalledTimes(1);
+  });
+
+  it('backs off longer after network errors', () => {
+    clock = 1000;
+    const rec = makeFakeRecognition();
+    const delays: number[] = [];
+    const svc = makeSyncSvc(rec, delays);
+    svc.start();
+    (rec.start as ReturnType<typeof vi.fn>).mockClear();
+
+    rec.onerror!({ error: 'network' });
+    rec.onend!();
+    expect(delays).toEqual([1500]);
     expect(rec.start).toHaveBeenCalledTimes(1);
   });
 
@@ -81,7 +130,7 @@ describe('SpeechService', () => {
   it('keeps elapsed time across automatic restarts', () => {
     clock = 2000;
     const rec = makeFakeRecognition();
-    const svc = new SpeechService({ createRecognition: () => rec, now: () => clock });
+    const svc = makeSyncSvc(rec, [], () => clock);
     const finals: Array<[string, number]> = [];
     svc.onFinal = (t, e) => finals.push([t, e]);
     svc.start();
@@ -101,7 +150,7 @@ describe('SpeechService', () => {
       if (starts > 1) throw new Error('InvalidStateError');
     });
     const errors: Array<[string, boolean]> = [];
-    const svc = new SpeechService({ createRecognition: () => rec, now: () => clock });
+    const svc = makeSyncSvc(rec, []);
     svc.onError = (e, fatal) => errors.push([e, fatal]);
     svc.start();
 

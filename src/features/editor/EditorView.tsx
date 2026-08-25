@@ -142,6 +142,28 @@ export default function EditorView() {
     setText(next);
   };
 
+  // Second pass: re-transcribe every clip whose live recognition was flagged approximate.
+  const [batchStatus, setBatchStatus] = useState<string | null>(null);
+  const flaggedIndexes = Array.from(
+    new Set(useEditorStore.getState().segments.filter((s) => s.approximate).map((s) => s.audioChunkIndex)),
+  ).sort((a, b) => a - b);
+
+  const fixFlaggedClips = async () => {
+    if (!whisperBeta || flaggedIndexes.length === 0) return;
+    for (let i = 0; i < flaggedIndexes.length; i++) {
+      const idx = flaggedIndexes[i];
+      setBatchStatus(`[RE-TRANSCRIBING CLIP ${idx + 1} · ${i + 1}/${flaggedIndexes.length}]`);
+      try {
+        const suggestion = await handleWhisperClip(idx);
+        if (suggestion) handleApplyWhisper(idx, suggestion);
+      } catch {
+        setBatchStatus(`[ERROR: CLIP ${idx + 1} FAILED — SKIPPING]`);
+      }
+    }
+    setBatchStatus('[SECOND PASS COMPLETE]');
+    setTimeout(() => setBatchStatus(null), 4000);
+  };
+
   // --- Writing tools -------------------------------------------------------
   const text = article?.transcriptText ?? '';
   const words = text.trim() ? text.trim().split(/\s+/).length : 0;
@@ -261,6 +283,12 @@ export default function EditorView() {
             <button aria-pressed={reading} onClick={toggleReading}>
               {reading ? '[Reading… stop]' : 'Read aloud'}
             </button>
+            {whisperBeta && flaggedIndexes.length > 0 && (
+              <button onClick={() => void fixFlaggedClips()}>
+                Fix flagged clips ({flaggedIndexes.length})
+              </button>
+            )}
+            {batchStatus && <span className="status-line">{batchStatus}</span>}
           </div>
           <label htmlFor="transcript" className="visually-hidden">Transcript</label>
           <textarea

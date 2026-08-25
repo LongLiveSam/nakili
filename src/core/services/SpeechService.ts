@@ -56,14 +56,30 @@ export class SpeechService {
   private createRecognition: () => RecognitionLike;
   private recognition: RecognitionLike | null = null;
   private now: () => number;
+  private schedule: (ms: number, cb: () => void) => void;
   private startedAt = 0;
   private pendingRestart = false;
   private restartError: string | null = null;
   private vocabulary: string[] = [];
+  private nextDelayMs = 0;
+  private lastInterimAt = -1;
+  private pendingInterim = '';
   stopRequested = false;
 
-  constructor(opts: { createRecognition?: () => RecognitionLike; now?: () => number } = {}) {
+  constructor(
+    opts: {
+      createRecognition?: () => RecognitionLike;
+      now?: () => number;
+      schedule?: (ms: number, cb: () => void) => void;
+    } = {},
+  ) {
     this.now = opts.now ?? (() => performance.now() / 1000);
+    // Injectable for tests; production uses a real 300–1500 ms backoff.
+    this.schedule =
+      opts.schedule ??
+      ((ms, cb) => {
+        window.setTimeout(cb, ms);
+      });
     this.createRecognition = opts.createRecognition ?? defaultCreateRecognition;
   }
 
@@ -151,9 +167,16 @@ export class SpeechService {
       const text = result[0]?.transcript.trim();
       if (!text) continue;
       if (result.isFinal) {
+        this.pendingInterim = '';
         this.onFinal?.(text, this.now() - this.startedAt);
       } else {
-        this.onInterim?.(text);
+        // Throttle interim renders to ~7/s — the final always supersedes.
+        const t = this.now();
+        this.pendingInterim = text;
+        if (this.lastInterimAt < 0 || t - this.lastInterimAt >= 0.15) {
+          this.lastInterimAt = t;
+          this.onInterim?.(this.pendingInterim);
+        }
       }
     }
   }
@@ -166,17 +189,28 @@ export class SpeechService {
     if (this.stopRequested) return;
     this.pendingRestart = true;
     this.restartError = error;
+    // Backoff: network hiccups need a longer breath than a mere no-speech.
+    this.nextDelayMs = error === 'network' ? 1500 : 300;
   }
 
   private handleEnd(): void {
+    if (this.paused) return; // user-initiated pause — stay stopped
     if (!this.pendingRestart || !this.recognition) return;
     this.pendingRestart = false;
     const error = this.restartError ?? 'unknown';
+    const delayMs = this.nextDelayMs;
     this.restartError = null;
-    try {
-      this.recognition.start();
-    } catch {
-      this.onError?.(error, true);
+    const attempt = () => {
+      try {
+        this.recognition!.start();
+      } catch {
+        this.onError?.(error, true);
+      }
+    };
+    if (delayMs > 0) {
+      this.schedule(delayMs, attempt);
+    } else {
+      attempt();
     }
   }
 }
