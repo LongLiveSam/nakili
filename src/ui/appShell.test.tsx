@@ -16,7 +16,8 @@ describe('app shell', () => {
       };
     }
     useAppStore.setState({ view: 'home', activeArticleId: null });
-    document.documentElement.removeAttribute('data-theme');
+    document.documentElement.setAttribute('data-skin', 'paper');
+    document.documentElement.setAttribute('data-mode', 'dark');
   });
 
   it('shows the landing page on first visit', async () => {
@@ -50,13 +51,17 @@ describe('app shell', () => {
     vi.doUnmock('./speechSupport');
   });
 
-  it('toggles dark and light themes', async () => {
+  it('cycles design skins and toggles light/dark mode', async () => {
     render(<App />);
-    const before = document.documentElement.getAttribute('data-theme') ?? 'dark';
-    const toggle = screen.getByRole('button', { name: new RegExp(`theme: ${before}`, 'i') });
-    await userEvent.click(toggle);
-    expect(document.documentElement.getAttribute('data-theme')).not.toBe(before);
-    expect(screen.getByRole('button', { name: new RegExp(`theme: (?!${before})`, 'i') })).toBeInTheDocument();
+    document.documentElement.setAttribute('data-skin', 'paper');
+    document.documentElement.setAttribute('data-mode', 'dark');
+
+    await userEvent.click(screen.getByRole('button', { name: /design: paper/i }));
+    expect(document.documentElement.getAttribute('data-skin')).toBe('primer');
+
+    await userEvent.click(screen.getByRole('button', { name: /mode: dark/i }));
+    expect(document.documentElement.getAttribute('data-mode')).toBe('light');
+    expect(screen.getByRole('button', { name: /mode: light/i })).toBeInTheDocument();
   });
 
   it('navigates to record view from the landing CTA', async () => {

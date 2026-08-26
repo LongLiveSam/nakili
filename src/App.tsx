@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAppStore, initHistorySync } from './ui/appStore';
+import { useThemeStore, SKINS, SKIN_LABELS, type Skin } from './ui/theme';
 import { UnsupportedBrowserNotice } from './ui/UnsupportedBrowserNotice';
 import { speechSupported } from './ui/speechSupport';
 import { HelpDialog } from './ui/HelpDialog';
@@ -9,36 +10,19 @@ import RecordingView from './features/recording/RecordingView';
 import EditorView from './features/editor/EditorView';
 import './features/views.css';
 
-function readStoredTheme(): 'dark' | 'light' {
-  try {
-    return localStorage.getItem('nakili-theme') === 'light' ? 'light' : 'dark';
-  } catch {
-    return 'dark';
-  }
-}
-
-function writeStoredTheme(theme: 'dark' | 'light'): void {
-  try {
-    localStorage.setItem('nakili-theme', theme);
-  } catch {
-    /* storage unavailable (private mode / tests) */
-  }
-}
-
 function AppShell({ children }: { children: React.ReactNode }) {
   const [helpOpen, setHelpOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const navigate = useAppStore((s) => s.navigate);
   const view = useAppStore((s) => s.view);
-  const [theme, setTheme] = useState<'dark' | 'light'>(
-    () => (document.documentElement.getAttribute('data-theme') as 'dark' | 'light') || readStoredTheme(),
-  );
+  const skin = useThemeStore((s) => s.skin);
+  const mode = useThemeStore((s) => s.mode);
+  const setSkin = useThemeStore((s) => s.setSkin);
+  const setMode = useThemeStore((s) => s.setMode);
 
-  const toggleTheme = () => {
-    const next = theme === 'dark' ? 'light' : 'dark';
-    document.documentElement.setAttribute('data-theme', next);
-    writeStoredTheme(next);
-    setTheme(next);
+  const cycleSkin = () => {
+    const i = SKINS.indexOf(skin);
+    setSkin(SKINS[(i + 1) % SKINS.length] as Skin);
   };
 
   return (
@@ -68,11 +52,19 @@ function AppShell({ children }: { children: React.ReactNode }) {
           </a>
           <button
             className="ghost"
-            onClick={toggleTheme}
-            aria-label={`Theme: ${theme}. Activate to switch`}
+            onClick={cycleSkin}
+            aria-label={`Design: ${SKIN_LABELS[skin]}. Activate to cycle`}
             style={{ minHeight: 32, padding: '4px 12px' }}
           >
-            Theme: {theme}
+            Design: {SKIN_LABELS[skin]}
+          </button>
+          <button
+            className="ghost"
+            onClick={() => setMode(mode === 'dark' ? 'light' : 'dark')}
+            aria-label={`Mode: ${mode}. Activate to switch`}
+            style={{ minHeight: 32, padding: '4px 12px' }}
+          >
+            Mode: {mode}
           </button>
           <button className="link-button" onClick={() => setHelpOpen(true)}>Help</button>
         </span>
