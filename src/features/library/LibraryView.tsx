@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useLibraryStore, formatDuration } from './libraryStore';
 import { ConfirmDialog } from './ConfirmDialog';
 import { useAppStore } from '../../ui/appStore';
-import { exportTranscript, exportFullRecording } from '../../core/services/ExportService';
+import { exportTranscript, exportDocx, exportFullRecording } from '../../core/services/ExportService';
 import { MoreVerticalIcon, SearchIcon } from '../../ui/icons';
 import { Landing } from './Landing';
 import type { Article } from '../../core/models';
@@ -170,6 +170,9 @@ export default function LibraryView() {
                     </button>
                     <button role="menuitem" onClick={async () => { setMenuFor(null); try { await exportTranscript(a.id, 'md'); setStatus('[DOWNLOADED MARKDOWN]'); } catch { setStatus('[ERROR: EXPORT FAILED]'); } }}>
                       Export Markdown
+                    </button>
+                    <button role="menuitem" onClick={async () => { setMenuFor(null); try { await exportDocx(a.id); setStatus('[DOWNLOADED DOCX]'); } catch { setStatus('[ERROR: EXPORT FAILED]'); } }}>
+                      Export Word (.docx)
                     </button>
                     <button role="menuitem" onClick={async () => { setMenuFor(null); try { await exportFullRecording(a.id, 'mp3'); setStatus('[DOWNLOADED AUDIO · MP3]'); } catch { setStatus('[ERROR: EXPORT FAILED]'); } }}>
                       Export audio · MP3

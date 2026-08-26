@@ -249,6 +249,32 @@ dialog p { margin: 0 0 var(--space-sm); font-size: var(--body-sm); }
   background-size: 16px 16px;
 }
 
+/* Transparent-textarea + mirror-overlay technique for playback highlighting */
+.ta-wrap { position: relative; }
+.ta-wrap .ta-mirror {
+  position: absolute;
+  inset: 0;
+  padding: 8px;
+  border: none;
+  overflow: hidden;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  font-family: inherit;
+  line-height: 1.6;
+  color: transparent;
+  pointer-events: none;
+}
+.ta-wrap textarea {
+  position: relative;
+  background: transparent;
+  border-bottom: none;
+}
+.ta-mirror .play-mark {
+  background: var(--accent-subtle);
+  color: var(--text-primary);
+  border-radius: 2px;
+}
+
 .editor-layout {
   display: flex;
   gap: var(--space-lg);

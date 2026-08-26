@@ -108,6 +108,19 @@ export interface CursorMapping {
   approximate: boolean;
 }
 
+/** Find the phrase being spoken at time `t` (linear scan; segments are few). */
+export function findSegmentForTime<T extends { startTimeSec: number; endTimeSec: number }>(
+  segments: T[],
+  t: number,
+): T | null {
+  let candidate: T | null = null;
+  for (const s of segments) {
+    if (t >= s.startTimeSec && t <= s.endTimeSec) return s;
+    if (t > s.endTimeSec) candidate = s; // nearest preceding if between phrases
+  }
+  return candidate;
+}
+
 export function findSegmentForCursor(
   segments: TranscriptSegment[],
   cursorOffset: number,

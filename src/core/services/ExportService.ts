@@ -39,6 +39,16 @@ export async function exportTranscript(articleId: string, format: 'txt' | 'md' =
   await shareOrDownload(blob, `${slugify(article.title)}.${format}`);
 }
 
+export async function exportDocx(articleId: string): Promise<void> {
+  const { getArticle } = await import('../db/repositories');
+  const article = await getArticle(articleId);
+  if (!article) throw new Error(`article not found: ${articleId}`);
+  const paragraphs = article.transcriptText.split(/\n{2,}/).filter((p) => p.trim().length > 0);
+  if (paragraphs.length === 0) paragraphs.push('(empty)');
+  const { buildDocxBlob } = await import('./docx');
+  await shareOrDownload(buildDocxBlob(article.title, paragraphs), `${slugify(article.title)}.docx`);
+}
+
 export type AudioExportFormat = 'mp3' | 'wav' | 'webm';
 
 /** Decode every chunk and concatenate as mono PCM for re-encoding. */

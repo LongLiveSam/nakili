@@ -7,6 +7,8 @@ import { ClipSidebar, type ClipRowData } from './ClipSidebar';
 import { ConfirmDialog } from '../library/ConfirmDialog';
 import { usePlaybackStore } from '../playback/playbackStore';
 import { ClipPlayerProvider } from '../playback/ClipPlayerProvider';
+import { PlayHighlightOverlay } from './PlayHighlightOverlay';
+import { TutorialOverlay } from '../../ui/TutorialOverlay';
 import { ArrowLeftIcon } from '../../ui/icons';
 import { findFillers, smartTypography } from '../../core/services/formatting';
 
@@ -50,6 +52,18 @@ export default function EditorView() {
   const [reading, setReading] = useState(false);
   const [sweep, setSweep] = useState<{ ranges: Array<{ start: number; end: number }>; i: number } | null>(null);
   const whisperBeta = isWhisperBetaEnabled();
+  const [tutorialOpen, setTutorialOpen] = useState(() => {
+    try {
+      return localStorage.getItem('nakili-tutorial-done') === null;
+    } catch {
+      return false;
+    }
+  });
+
+  const finishTutorial = () => {
+    setTutorialOpen(false);
+    try { localStorage.setItem('nakili-tutorial-done', '1'); } catch { /* ignore */ }
+  };
 
   // Live-apply font-size changes made in Settings.
   useEffect(() => {
@@ -236,6 +250,7 @@ export default function EditorView() {
 
   return (
     <ClipPlayerProvider>
+      <TutorialOverlay open={tutorialOpen} onDone={finishTutorial} />
       <main className="view editor-layout">
         <div className="editor-main">
           <div className="view-header">
@@ -267,6 +282,9 @@ export default function EditorView() {
           <div className="label" style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', marginBottom: 8 }}>
             <span>{words} words</span>
             <span>· {readMin} min read</span>
+            {article.durationSec > 0 && (
+              <span>· {Math.round(words / Math.max(1, article.durationSec / 60))} wpm</span>
+            )}
             {fillerCount > 0 && (
               <button className="ghost" style={{ minHeight: 28, padding: '0 10px' }} onClick={cycleFillers}>
                 [Fillers: {fillerCount} — review]
@@ -291,18 +309,33 @@ export default function EditorView() {
             {batchStatus && <span className="status-line">{batchStatus}</span>}
           </div>
           <label htmlFor="transcript" className="visually-hidden">Transcript</label>
-          <textarea
-            id="transcript"
-            ref={taRef}
-            value={article.transcriptText}
-            onChange={(e) => setText(e.target.value)}
-            onClick={syncCursor}
-            onKeyUp={syncCursor}
-            onSelect={syncCursor}
-            onKeyDown={handleKeyDown}
-            spellCheck
-            style={{ width: '100%', height: '70vh', fontSize, lineHeight: 1.6 }}
-          />        </div>
+          <div className="ta-wrap">
+            {playingIndex !== null && (
+              <PlayHighlightOverlay
+                taRef={taRef}
+                text={article.transcriptText}
+                segments={useEditorStore.getState().segments}
+                fontSize={fontSize}
+              />
+            )}
+            <textarea
+              id="transcript"
+              ref={taRef}
+              value={article.transcriptText}
+              onChange={(e) => setText(e.target.value)}
+              onClick={syncCursor}
+              onKeyUp={syncCursor}
+              onSelect={syncCursor}
+              onKeyDown={handleKeyDown}
+              onScroll={(e) => {
+                const m = e.currentTarget.previousSibling as HTMLElement | null;
+                if (m) m.scrollTop = e.currentTarget.scrollTop;
+              }}
+              spellCheck
+              style={{ width: '100%', height: '70vh', fontSize, lineHeight: 1.6 }}
+            />
+          </div>
+        </div>
 
         <ClipSidebar
           chunks={chunks}

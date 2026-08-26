@@ -27,6 +27,8 @@ let startedAtMs = 0;
 let currentDraftId: string | null = null;
 let silenceTicks = 0;
 let lastBreakSec = -30;
+let vadSilence = 0;
+let vadVoice = 0;
 const boundariesSec: number[] = [];
 interface AppendBase { timeBase: number; indexBase: number; prevLen: number }
 let appendBase: AppendBase | null = null;
@@ -68,7 +70,7 @@ function makeServices(): void {
 
 interface RecordingState {
   status: 'idle' | 'recording';
-  paused: boolean;
+  paused: false | 'user' | 'vad';
   elapsedSec: number;
   interimText: string;
   finals: FinalResult[];
@@ -199,28 +201,61 @@ export const useRecordingStore = create<RecordingState>((set, get) => ({
       .then((wl) => { wakeLockSentinel = wl; })
       .catch(() => {});
     // Prosody: watch the level meter feed for ~0.9 s silences → paragraph hints.
+    // Hands-free VAD (optional): ≥3 s silence auto-pauses; voice resumes.
     silenceTicks = 0;
     lastBreakSec = -30;
+    vadSilence = 0;
+    vadVoice = 0;
+    const vadOn = featureOn('nakili-vad');
     ticker = setInterval(() => {
       set((s) => {
-        const elapsedSec = s.elapsedSec + 0.25;
         const an = getActiveAnalyser();
+        let level = 0;
         if (an) {
           const data = new Uint8Array(an.frequencyBinCount);
           an.getByteFrequencyData(data);
           let sum = 0;
           for (let i = 0; i < data.length; i++) sum += data[i];
-          const level = sum / data.length;
-          if (level < 10) {
-            silenceTicks++;
-            if (silenceTicks * 0.25 >= 0.9 && elapsedSec - lastBreakSec >= 25) {
-              boundariesSec.push(elapsedSec);
-              lastBreakSec = elapsedSec;
-              silenceTicks = 0;
+          level = sum / data.length;
+        }
+
+        // Hands-free VAD — runs even while vad-paused so voice can resume.
+        if (vadOn && an) {
+          if (!s.paused) {
+            if (level < 10) vadSilence++;
+            else vadSilence = 0;
+            if (vadSilence >= 12) {
+              speech?.pause();
+              recorder?.pause?.();
+              vadSilence = 0;
+              vadVoice = 0;
+              return { paused: 'vad' as const };
             }
-          } else {
+          } else if (s.paused === 'vad') {
+            if (level > 20) vadVoice++;
+            else vadVoice = 0;
+            if (vadVoice >= 2) {
+              speech?.resume();
+              recorder?.resume?.();
+              vadSilence = 0;
+              return { paused: false };
+            }
+            return {}; // stay paused, keep watching
+          }
+        }
+
+        if (s.paused) return {};
+
+        const elapsedSec = s.elapsedSec + 0.25;
+        if (an && level < 10) {
+          silenceTicks++;
+          if (silenceTicks * 0.25 >= 0.9 && elapsedSec - lastBreakSec >= 25) {
+            boundariesSec.push(elapsedSec);
+            lastBreakSec = elapsedSec;
             silenceTicks = 0;
           }
+        } else {
+          silenceTicks = 0;
         }
         return { elapsedSec };
       });
@@ -235,12 +270,12 @@ export const useRecordingStore = create<RecordingState>((set, get) => ({
 
   pauseToggle: () => {
     const s = get();
-    if (s.status !== 'recording') return;
+    if (s.status !== 'recording' || s.paused === 'user') return;
     if (!s.paused) {
       if (ticker) { clearInterval(ticker); ticker = null; }
       speech?.pause();
       recorder?.pause?.();
-      set({ paused: true });
+      set({ paused: 'user' });
     } else {
       speech?.resume();
       recorder?.resume?.();

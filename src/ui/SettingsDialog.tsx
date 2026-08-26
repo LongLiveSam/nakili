@@ -183,6 +183,10 @@ export function SettingsDialog({ open, onClose }: Props) {
 
       <h3>Playback</h3>
       <Toggle label="Auto-play next clip" storageKey="nakili-autonext" defaultOn={false} />
+      <Toggle label="Skip silence during playback" storageKey="nakili-skipsilence" defaultOn={false} />
+
+      <h3>Hands-free</h3>
+      <Toggle label="Voice-activated pause (auto-pause after 3s silence, resume on voice)" storageKey="nakili-vad" defaultOn={false} />
 
       <h3>Editor</h3>
       <label className="label" htmlFor="fontsize">Font size</label>

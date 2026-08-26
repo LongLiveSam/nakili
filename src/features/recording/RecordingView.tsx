@@ -97,7 +97,7 @@ export default function RecordingView() {
         </span>
         {status === 'recording' ? (
           <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={pauseToggle} aria-pressed={paused}>
+            <button onClick={pauseToggle} aria-pressed={paused === 'vad' || paused === 'user'}>
               {paused ? 'Resume' : 'Pause'}
             </button>
             <button className="primary" onClick={() => void stopAndSave(articleId)}>
