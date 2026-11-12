@@ -54,6 +54,9 @@ describe('settings — local engine', () => {
     expect(codes).toContain('ja-JP');
     expect(codes).toContain('zh-CN');
     expect(codes).toContain('ar-SA');
+    expect(codes).toContain('sw-KE');
+    expect(codes).toContain('am-ET');
+    expect(codes).toContain('yo-NG');
     expect(new Set(codes).size).toBe(codes.length);
   });
 });

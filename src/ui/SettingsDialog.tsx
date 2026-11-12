@@ -52,6 +52,18 @@ export const RECOGNITION_LANGUAGES = [
   { code: 'ko-KR', label: '한국어' },
   { code: 'zh-CN', label: '中文 (简体)' },
   { code: 'zh-TW', label: '中文 (繁體)' },
+  { code: 'sw-KE', label: 'Kiswahili' },
+  { code: 'am-ET', label: 'አማርኛ' },
+  { code: 'ha-NG', label: 'Hausa' },
+  { code: 'yo-NG', label: 'Yorùbá' },
+  { code: 'ig-NG', label: 'Igbo' },
+  { code: 'zu-ZA', label: 'isiZulu' },
+  { code: 'xh-ZA', label: 'isiXhosa' },
+  { code: 'af-ZA', label: 'Afrikaans' },
+  { code: 'so-SO', label: 'Soomaali' },
+  { code: 'ln-CD', label: 'Lingála' },
+  { code: 'mg-MG', label: 'Malagasy' },
+  { code: 'sn-ZW', label: 'chiShona' },
 ];
 
 /** Languages Whisper can transcribe; 'auto' lets the model detect it. */
@@ -76,6 +88,15 @@ export const WHISPER_LANGUAGES = [
   { code: 'ja', label: 'Japanese' },
   { code: 'ko', label: 'Korean' },
   { code: 'zh', label: 'Chinese' },
+  { code: 'sw', label: 'Kiswahili' },
+  { code: 'am', label: 'Amharic' },
+  { code: 'ha', label: 'Hausa' },
+  { code: 'so', label: 'Somali' },
+  { code: 'yo', label: 'Yoruba' },
+  { code: 'ln', label: 'Lingala' },
+  { code: 'mg', label: 'Malagasy' },
+  { code: 'sn', label: 'Shona' },
+  { code: 'af', label: 'Afrikaans' },
 ];
 
 function loadStored(key: string, fallback = ''): string {
@@ -231,6 +252,11 @@ export function SettingsDialog({ open, onClose }: Props) {
           <option key={l.code} value={l.code}>{l.label}</option>
         ))}
       </select>
+      <p style={{ color: 'var(--text-disabled)', fontSize: 12 }}>
+        Browser recognition depends on Chrome or Edge. The local engine below
+        covers more languages, including Kiswahili, Amharic, Hausa, Somali,
+        Yoruba, Lingala, Malagasy, Shona and Afrikaans.
+      </p>
 
       <h3>Local engine (beta)</h3>
       <Toggle

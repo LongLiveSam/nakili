@@ -1,47 +1,75 @@
 # Nakili
 
-Private, local-first dictation for long-form writing. Speak, watch words appear
-in real time, edit the transcript like a document — with the original audio
-always one click away as 30-second clips mapped to your text.
+**Nakili** is Swahili for “transcribe”. It is a private, local-first dictation
+app for long-form writing: speak, watch the words appear, edit the transcript
+like a document, and keep the original audio one click away as clips mapped to
+your text.
+
+Nakili is built for African languages. The local Whisper engine already
+supports Kiswahili, Amharic, Hausa, Somali, Yoruba, Lingala, Malagasy, Shona
+and Afrikaans, and the language list is meant to grow until Nakili works in as
+many African languages as possible.
 
 **Live:** https://longlivesam.github.io/nakili/
 
+## What it does
+
+- **Dictate.** Words appear as you speak. Say “new paragraph” or “period” and
+  Nakili writes the structure for you.
+- **Check the audio.** Click any sentence to highlight the clip it came from,
+  listen to the exact moment, and fix the words in place.
+- **Import a recording.** Drop in an existing audio file; Nakili splits it into
+  clips and transcribes it on your device with the local Whisper engine.
+- **Read it back.** Narrate the transcript with the system voice.
+- **Export.** Text, Markdown, Word, MP3, WAV, or the original audio.
+- **Work offline.** Install it as a PWA; the shell and your recordings stay
+  available without a network.
+
+## Privacy
+
+Everything stays in your browser's IndexedDB. No account, no server, no sync.
+Speech-to-text is your browser's own service. Clearing site data deletes all
+recordings. Audio export (MP3/WAV) is encoded locally via lamejs — nothing is
+uploaded.
+
+The optional local Whisper engine downloads its model from HuggingFace once and
+caches it in the browser; after that, clip re-transcription and audio import run
+fully offline. The model can be removed again from Settings.
+
+## Languages
+
+Nakili is being built for African languages first. The local engine currently
+supports:
+
+| Language | Code |
+| --- | --- |
+| Kiswahili | `sw` |
+| Amharic | `am` |
+| Hausa | `ha` |
+| Somali | `so` |
+| Yoruba | `yo` |
+| Lingala | `ln` |
+| Malagasy | `mg` |
+| Shona | `sn` |
+| Afrikaans | `af` |
+
+The browser recognizer (Chrome or Edge) covers a wider set of locales, and the
+list is meant to grow. Where the browser does not offer a language, the local
+engine is the path that does not depend on the browser vendor.
+
 ## Run it
 
-```powershell
+```bash
 npm install
-npm run dev      # http://localhost:5173
-npm test         # Vitest suite
-npm run build    # production build to dist/
+npm run dev        # http://localhost:5173
+npm test           # Vitest suite
+npm run build      # production build to dist/
 ./scripts/live.sh  # build, serve dist/ on :4173, open a public HTTPS tunnel
 ```
 
-Requires **Chrome or Edge** (uses the Web Speech API).
+Requires **Chrome or Edge** for live dictation (Web Speech API).
 
-Deployment options and the local production server are documented in
-[docs/DEPLOY.md](docs/DEPLOY.md).
-
-## Versioning
-
-The app version is shown in the footer and in Help. It uses decimal minor
-steps, so small changes move `0.01 → 0.02`, larger milestones jump to `0.5`,
-and a rewrite can go to `1.0`. Every release is a git tag and a changelog entry.
-
-```bash
-npm run release -- bump --note "what changed"   # +0.01
-npm run release -- set 0.5 --note "public beta" # jump
-npm run release -- bump --dry-run               # preview only
-```
-
-The script updates `package.json`, `package-lock.json` and `CHANGELOG.md`,
-commits `chore: release vX`, and creates the tag `vX`. Push with:
-
-```bash
-git push --follow-tags
-```
-
-The current version is the single source of truth in `package.json`; Vite
-injects it as `__APP_VERSION__` at build time.
+Deployment options are documented in [docs/DEPLOY.md](docs/DEPLOY.md).
 
 ## Using it
 
@@ -50,35 +78,27 @@ injects it as `__APP_VERSION__` at build time.
   clips and transcribed on this device with the local Whisper engine. Enable
   that engine in **Settings → Local engine** first (one model download, then
   offline).
-- Click anywhere in a transcript; the matching 30 s clip highlights in the
-  Clips panel for instant playback ("~" = approximate match after edits).
+- Click anywhere in a transcript; the matching clip highlights in the Clips
+  panel for instant playback (“~” = approximate match after edits).
 - **Read aloud** narrates the transcript with the system voice.
-- Export from the editor or the ⋮ menu: `.txt` transcript / `.webm` audio.
-  Exports always download; nothing is shared through the Web Share API.
+- Export from the editor or the ⋮ menu: text, Markdown, Word, MP3, WAV or the
+  original audio. Exports always download; nothing is shared through the Web
+  Share API.
 
-## Privacy
+## Design
 
-Everything stays in your browser's IndexedDB. No account, no server, no sync.
-Speech-to-text is your browser's own service. Clearing site data deletes all
-recordings. Audio export (MP3/WAV) is encoded locally via lamejs — nothing
-is uploaded.
+Nothing design language: monochrome, typographic, industrial — Doto / Space
+Grotesk / Space Mono, OLED-dark and paper-light themes, segmented progress
+bars, inline `[STATUS]` text instead of toasts.
 
-The optional local Whisper engine downloads its model from HuggingFace once and
-caches it in the browser; after that, clip re-transcription and audio import run
-fully offline. The model can be removed again from Settings.
+## Roadmap
 
-## Design system
+- More African languages, starting with the ones the local engine already
+  supports.
+- Manual audio-only recording for browsers without the Web Speech API.
+- Opt-in cloud re-transcription (“enhance accuracy”) with a user-supplied API
+  key — intentionally not built, to keep the app free and private.
 
-Nothing design language (`Nothing design` skill): monochrome, typographic,
-industrial — Doto / Space Grotesk / Space Mono, OLED-dark + paper-light themes,
-segmented progress bars, inline `[STATUS]` text instead of toasts.
+## License
 
-## Roadmap (deferred by decision)
-
-- Manual audio-only recording mode for browsers without Web Speech API.
-- Opt-in cloud re-transcription ("enhance accuracy") using a user-supplied
-  API key — intentionally not built to keep the app fully free and private.
-
-## Contact
-
-culturedrabbit@gmail.com
+MIT. See [LICENSE](LICENSE).
