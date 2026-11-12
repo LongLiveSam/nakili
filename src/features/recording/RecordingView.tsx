@@ -75,7 +75,7 @@ export default function RecordingView() {
   const recorderNotice = useRecordingStore((s) => s.recorderNotice);
 
   return (
-    <main className="view">
+    <main className="view" id="main">
       <div className="view-header">
         {status !== 'recording' && (
           <button aria-label="Back to recordings" onClick={() => navigate('home')}>

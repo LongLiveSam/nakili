@@ -269,16 +269,35 @@ export default function EditorView() {
   return (
     <ClipPlayerProvider>
       <TutorialOverlay open={tutorialOpen} onDone={finishTutorial} />
-      <main className="view editor-layout">
+      <main className="view editor-layout" id="main">
         <div className="editor-main">
-          <div className="view-header">
-            <button aria-label="Back to recordings" onClick={() => navigate('home')}>
+          <div className="view-header editor-header">
+            <button className="editor-back" aria-label="Back to recordings" onClick={() => navigate('home')}>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                 <ArrowLeftIcon /> Recordings
               </span>
             </button>
-            <h1 style={{ margin: 0 }}>{article.title}</h1>
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <div className="editor-heading">
+              <h1 className="editor-title">{article.title}</h1>
+              <div className="label editor-meta">
+                <span>{words} words</span>
+                <span>· {readMin} min read</span>
+                {article.durationSec > 0 && (
+                  <span>· {Math.round(words / Math.max(1, article.durationSec / 60))} wpm</span>
+                )}
+                {fillerCount > 0 && (
+                  <button className="ghost" style={{ minHeight: 28, padding: '0 10px' }} onClick={cycleFillers}>
+                    [Fillers: {fillerCount} — review]
+                  </button>
+                )}
+                {vocabRanges.length > 0 && (
+                  <button className="ghost" style={{ minHeight: 28, padding: '0 10px' }} onClick={cycleVocab}>
+                    [Vocab hits: {vocabRanges.length} — review]
+                  </button>
+                )}
+              </div>
+            </div>
+            <div className="editor-actions">
               {saveError ? (
                 <span role="alert" className="status-line error">[AUTOSAVE FAILED — WILL RETRY]</span>
               ) : (
@@ -297,24 +316,7 @@ export default function EditorView() {
               </button>
             </div>
           </div>
-          <div className="label" style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', marginBottom: 8 }}>
-            <span>{words} words</span>
-            <span>· {readMin} min read</span>
-            {article.durationSec > 0 && (
-              <span>· {Math.round(words / Math.max(1, article.durationSec / 60))} wpm</span>
-            )}
-            {fillerCount > 0 && (
-              <button className="ghost" style={{ minHeight: 28, padding: '0 10px' }} onClick={cycleFillers}>
-                [Fillers: {fillerCount} — review]
-              </button>
-            )}
-            {vocabRanges.length > 0 && (
-              <button className="ghost" style={{ minHeight: 28, padding: '0 10px' }} onClick={cycleVocab}>
-                [Vocab hits: {vocabRanges.length} — review]
-              </button>
-            )}
-          </div>
-          <div style={{ display: 'flex', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
+          <div className="editor-tools">
             <button onClick={() => setText(smartTypography(text))}>Smart typography</button>
             <button onClick={() => void runScript()}>Run script</button>
             <button aria-pressed={reading} onClick={toggleReading}>

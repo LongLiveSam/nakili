@@ -47,9 +47,25 @@ describe('library', () => {
     expect(screen.getByText(/2:05/)).toBeInTheDocument();
   });
 
+  it('shows the landing without a duplicate recordings header when empty', async () => {
+    render(<LibraryView />);
+    expect(await screen.findByRole('heading', { name: /nakili/i })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: /recordings/i })).not.toBeInTheDocument();
+  });
+
+  it('reports when a search has no matches', async () => {
+    await seed('My essay');
+    render(<LibraryView />);
+    const input = await screen.findByPlaceholderText(/search title or transcript/i);
+    await userEvent.type(input, 'zzzz');
+    expect(screen.getByText(/no matches/i)).toBeInTheDocument();
+    expect(screen.queryByText('My essay')).not.toBeInTheDocument();
+  });
+
   it('creates an article and navigates to record view with its id', async () => {
     render(<LibraryView />);
-    await userEvent.click(screen.getByRole('button', { name: /new recording/i }));
+    const ctas = await screen.findAllByRole('button', { name: /start dictating/i });
+    await userEvent.click(ctas[0]);
     await waitFor(() => expect(useAppStore.getState().view).toBe('record'));
     expect(useAppStore.getState().activeArticleId).toBeTruthy();
   });

@@ -8,7 +8,6 @@ import { SettingsDialog } from './ui/SettingsDialog';
 import LibraryView from './features/library/LibraryView';
 import RecordingView from './features/recording/RecordingView';
 import EditorView from './features/editor/EditorView';
-import './features/views.css';
 
 function AppShell({ children }: { children: React.ReactNode }) {
   const [helpOpen, setHelpOpen] = useState(false);
@@ -27,6 +26,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="app-frame">
+      <a className="skip-link" href="#main">Skip to content</a>
       <header className="app-header">
         <button className="brand" onClick={() => navigate('home')} aria-label="Nakili home">
           Nakili
@@ -44,7 +44,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
 
       <footer className="app-footer">
         <span>Local-first dictation. Nothing leaves your browser.</span>
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 12 }}>
+        <span className="footer-controls">
           <a
             href={`mailto:culturedrabbit@gmail.com?subject=${encodeURIComponent('Nakili feedback')}&body=${encodeURIComponent(`\n\n—\n${navigator.userAgent}`)}`}
           >
@@ -54,7 +54,6 @@ function AppShell({ children }: { children: React.ReactNode }) {
             className="ghost"
             onClick={cycleSkin}
             aria-label={`Design: ${SKIN_LABELS[skin]}. Activate to cycle`}
-            style={{ minHeight: 32, padding: '4px 12px' }}
           >
             Design: {SKIN_LABELS[skin]}
           </button>
@@ -62,11 +61,9 @@ function AppShell({ children }: { children: React.ReactNode }) {
             className="ghost"
             onClick={() => setMode(mode === 'dark' ? 'light' : 'dark')}
             aria-label={`Mode: ${mode}. Activate to switch`}
-            style={{ minHeight: 32, padding: '4px 12px' }}
           >
             Mode: {mode}
           </button>
-          <button className="link-button" onClick={() => setHelpOpen(true)}>Help</button>
         </span>
       </footer>
 

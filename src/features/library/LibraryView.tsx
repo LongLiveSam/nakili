@@ -61,12 +61,20 @@ export default function LibraryView() {
     };
   }, [menuFor]);
 
+  const visible = articles.filter((a) => {
+    if (!query.trim()) return true;
+    const q = query.trim().toLowerCase();
+    return a.title.toLowerCase().includes(q) || a.transcriptText.toLowerCase().includes(q);
+  });
+
   return (
-    <main className="view">
-      <div className="view-header">
-        <h1>Recordings</h1>
-        <button className="primary" onClick={() => void handleNew()}>New recording</button>
-      </div>
+    <main className="view" id="main">
+      {articles.length > 0 && (
+        <div className="view-header">
+          <h1>Recordings</h1>
+          <button className="primary" onClick={() => void handleNew()}>New recording</button>
+        </div>
+      )}
 
       {status && (
         <p className={`status-line${status.startsWith('[ERROR') ? ' error' : ''}`} role={status.startsWith('[ERROR') ? 'alert' : undefined}>
@@ -75,7 +83,7 @@ export default function LibraryView() {
       )}
 
       {loaded && articles.length > 0 && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+        <div className="library-search">
           <SearchIcon />
           <label className="visually-hidden" htmlFor="library-search">Search recordings</label>
           <input
@@ -84,7 +92,6 @@ export default function LibraryView() {
             placeholder="Search title or transcript…"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            style={{ flex: 1 }}
           />
         </div>
       )}
@@ -93,44 +100,19 @@ export default function LibraryView() {
         <p className="label" aria-busy="true" aria-live="polite">[LOADING RECORDINGS…]</p>
       ) : articles.length === 0 ? (
         <Landing onStart={() => void handleNew()} />
+      ) : visible.length === 0 ? (
+        <p className="status-line" role="status">[NO MATCHES — CLEAR THE SEARCH FIELD]</p>
       ) : (
-        <ul role="list" style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: 0 }}>
-          {articles
-            .filter((a) => {
-              if (!query.trim()) return true;
-              const q = query.trim().toLowerCase();
-              return (
-                a.title.toLowerCase().includes(q) ||
-                a.transcriptText.toLowerCase().includes(q)
-              );
-            })
-            .map((a) => (
-            <li
-              key={a.id}
-              style={{
-                borderBottom: '1px solid var(--border)',
-                padding: '12px 0',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 12,
-              }}
-            >
-              <button
-                style={{
-                  flex: 1, textAlign: 'left', border: 'none',
-                  borderRadius: 0, minHeight: 44, padding: '8px 0',
-                  textTransform: 'none', letterSpacing: 0,
-                  fontFamily: '"Space Grotesk", sans-serif', fontSize: 16,
-                }}
-                onClick={() => navigate('editor', a.id)}
-              >
+        <ul role="list" className="recording-list">
+          {visible.map((a) => (
+            <li key={a.id} className="recording-row">
+              <button className="recording-open" onClick={() => navigate('editor', a.id)}>
                 <strong>{a.title}</strong>
-                <br />
-                <span style={{ color: 'var(--text-secondary)', fontFamily: '"Space Mono", monospace', fontSize: 12 }}>
+                <span className="recording-meta">
                   {formatDate(a.updatedAt)} · {formatDuration(a.durationSec)}
                 </span>
               </button>
-              <div ref={menuFor === a.id ? menuWrapRef : undefined} style={{ display: 'inline-flex', position: 'relative' }}>
+              <div ref={menuFor === a.id ? menuWrapRef : undefined} className="recording-actions">
                 <button
                   id={`actions-${a.id}`}
                   aria-label={`Actions for ${a.title}`}
@@ -147,16 +129,12 @@ export default function LibraryView() {
                   <div
                     role="menu"
                     aria-label={`${a.title} actions`}
+                    className="recording-menu"
                     onKeyDown={(e) => {
                       const buttons = Array.from(e.currentTarget.querySelectorAll('button'));
                       const i = buttons.indexOf(document.activeElement as HTMLButtonElement);
                       if (e.key === 'ArrowDown') { e.preventDefault(); buttons[(i + 1) % buttons.length]?.focus(); }
                       if (e.key === 'ArrowUp') { e.preventDefault(); buttons[(i - 1 + buttons.length) % buttons.length]?.focus(); }
-                    }}
-                    style={{
-                      position: 'absolute', right: 0, top: 'calc(100% + 4px)', zIndex: 20,
-                      border: '1px solid var(--border-visible)', borderRadius: 8,
-                      background: 'var(--surface-raised)', display: 'grid', minWidth: 180,
                     }}
                   >
                     <button role="menuitem" onClick={() => { setRenaming(a); setRenameText(a.title); setMenuFor(null); }}>

@@ -88,7 +88,7 @@ export function HelpDialog({ open, onClose }: Props) {
           <a href="mailto:culturedrabbit@gmail.com">culturedrabbit@gmail.com</a>
         </p>
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 16 }}>
+        <div className="dialog-actions sticky">
           <button className="primary" onClick={onClose}>Close</button>
         </div>
       </div>

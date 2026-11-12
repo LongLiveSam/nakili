@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import App from '../App';
 import { useAppStore } from './appStore';
+import { useLibraryStore } from '../features/library/libraryStore';
 
 describe('app shell', () => {
   beforeEach(() => {
@@ -16,6 +17,9 @@ describe('app shell', () => {
       };
     }
     useAppStore.setState({ view: 'home', activeArticleId: null });
+    // Empty, already-loaded library: the landing renders on first paint instead
+    // of waiting on an IndexedDB round trip (which made this suite timing-flaky).
+    useLibraryStore.setState({ articles: [], loaded: true });
     document.documentElement.setAttribute('data-skin', 'paper');
     document.documentElement.setAttribute('data-mode', 'dark');
   });
@@ -23,16 +27,18 @@ describe('app shell', () => {
   it('shows the landing page on first visit', async () => {
     render(<App />);
     expect(
-      await screen.findByRole('heading', { name: 'Nakili' }, { timeout: 4000 }),
+      await screen.findByRole('heading', { name: /nakili/i }),
     ).toBeInTheDocument();
-    expect(screen.getByText(/Turn your voice into polished articles/)).toBeInTheDocument();
-    expect(screen.getByText('Speak naturally')).toBeInTheDocument();
+    expect(screen.getByText(/edit the words in place/i)).toBeInTheDocument();
+    expect(screen.getByText('Live transcript while you speak')).toBeInTheDocument();
   });
 
   it('shows site header with brand, Recordings link and Help', () => {
     render(<App />);
     expect(screen.getByRole('button', { name: 'Nakili home' })).toBeInTheDocument();
-    expect(screen.getAllByRole('button', { name: 'Help' }).length).toBeGreaterThan(0);
+    // One Help entry (header); the footer repeats only theme controls.
+    expect(screen.getByRole('button', { name: 'Help' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /skip to content/i })).toHaveAttribute('href', '#main');
   });
 
   it('opens the Help dialog from the header', async () => {
@@ -66,8 +72,8 @@ describe('app shell', () => {
 
   it('navigates to record view from the landing CTA', async () => {
     render(<App />);
-    const cta = await screen.findByRole('button', { name: /start dictating/i });
-    await userEvent.click(cta);
+    const ctas = await screen.findAllByRole('button', { name: /start dictating/i });
+    await userEvent.click(ctas[0]);
     await waitFor(() => expect(useAppStore.getState().view).toBe('record'));
     expect(useAppStore.getState().activeArticleId).toBeTruthy();
   });

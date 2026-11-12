@@ -67,6 +67,7 @@ export function ConfirmDialog({ open, title, children, confirmLabel, danger, onC
       ref={ref}
       onClose={onCancel}
       aria-label={title}
+      style={{ maxWidth: 440 }}
       onClick={(e) => {
         if (e.target === ref.current) onCancel();
       }}
@@ -79,13 +80,10 @@ export function ConfirmDialog({ open, title, children, confirmLabel, danger, onC
       >
         [ X ]
       </button>
-      <form
-        onSubmit={(e) => { e.preventDefault(); onConfirm(); }}
-        style={{ minWidth: 320 }}
-      >
-        <h2 style={{ marginTop: 0, marginRight: 48 }}>{title}</h2>
+      <form onSubmit={(e) => { e.preventDefault(); onConfirm(); }}>
+        <h2 style={{ marginRight: 48 }}>{title}</h2>
         {children}
-        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 16 }}>
+        <div className="dialog-actions">
           <button type="button" onClick={onCancel}>Cancel</button>
           <button type="submit" className={danger ? 'danger' : 'primary'}>{confirmLabel}</button>
         </div>

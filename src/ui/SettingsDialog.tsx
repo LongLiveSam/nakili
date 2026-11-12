@@ -128,16 +128,7 @@ export function SettingsDialog({ open, onClose }: Props) {
         id="lang"
         value={lang}
         onChange={(e) => setLang(e.target.value)}
-        style={{
-          font: 'inherit',
-          background: 'var(--surface)',
-          color: 'var(--text-primary)',
-          border: '1px solid var(--border-visible)',
-          borderRadius: 8,
-          minHeight: 44,
-          padding: '0 12px',
-          width: '100%',
-        }}
+        className="field"
       >
         {RECOGNITION_LANGUAGES.map((l) => (
           <option key={l.code} value={l.code}>{l.label}</option>
@@ -155,7 +146,7 @@ export function SettingsDialog({ open, onClose }: Props) {
         value={text}
         onChange={(e) => { setText(e.target.value); setSaved(false); }}
         rows={6}
-        style={{ width: '100%', minHeight: 120 }}
+        className="field-area"
         placeholder={'Kubernetes\nSchwarzschild\nNakili'}
       />
 
@@ -165,16 +156,7 @@ export function SettingsDialog({ open, onClose }: Props) {
         id="mic"
         value={micId}
         onChange={(e) => setMicId(e.target.value)}
-        style={{
-          font: 'inherit',
-          background: 'var(--surface)',
-          color: 'var(--text-primary)',
-          border: '1px solid var(--border-visible)',
-          borderRadius: 8,
-          minHeight: 44,
-          padding: '0 12px',
-          width: '100%',
-        }}
+        className="field"
       >
         <option value="">System default</option>
         {mics.map((m, i) => (
@@ -218,16 +200,7 @@ export function SettingsDialog({ open, onClose }: Props) {
           setThreshold(e.target.value);
           saveStored(PIPELINE_KEYS.threshold, e.target.value);
         }}
-        style={{
-          font: 'inherit',
-          background: 'var(--surface)',
-          color: 'var(--text-primary)',
-          border: '1px solid var(--border-visible)',
-          borderRadius: 8,
-          minHeight: 44,
-          padding: '0 12px',
-          width: '100%',
-        }}
+        className="field"
       >
         <option value="0.12">Strict — only close spellings</option>
         <option value="0.18">Balanced — recommended</option>
@@ -250,16 +223,7 @@ export function SettingsDialog({ open, onClose }: Props) {
           setFontSize(e.target.value);
           saveStored('nakili-fontsize', e.target.value);
         }}
-        style={{
-          font: 'inherit',
-          background: 'var(--surface)',
-          color: 'var(--text-primary)',
-          border: '1px solid var(--border-visible)',
-          borderRadius: 8,
-          minHeight: 44,
-          padding: '0 12px',
-          width: '100%',
-        }}
+        className="field"
       >
         <option value="16">Small</option>
         <option value="18">Medium</option>
@@ -278,7 +242,7 @@ export function SettingsDialog({ open, onClose }: Props) {
         onChange={(e) => { setScript(e.target.value); setSaved(false); }}
         rows={6}
         spellCheck={false}
-        style={{ width: '100%', minHeight: 120, fontFamily: 'var(--font-mono)', fontSize: 13 }}
+        className="field-area field-area-mono"
         placeholder={'// one sentence per line\nreturn text.split(/(?<=[.!?])\\s+/).join("\\n");'}
       />
 
@@ -301,16 +265,7 @@ export function SettingsDialog({ open, onClose }: Props) {
           setRetention(choice);
           saveStored(RETENTION_KEY, choice);
         }}
-        style={{
-          font: 'inherit',
-          background: 'var(--surface)',
-          color: 'var(--text-primary)',
-          border: '1px solid var(--border-visible)',
-          borderRadius: 8,
-          minHeight: 44,
-          padding: '0 12px',
-          width: '100%',
-        }}
+        className="field"
       >
         <option value="forever">Forever</option>
         <option value="365">1 year</option>
@@ -357,7 +312,7 @@ export function SettingsDialog({ open, onClose }: Props) {
         )}
       </div>
 
-      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 16 }}>
+      <div className="dialog-actions sticky">
         <button onClick={onClose}>Cancel</button>
         <button className="primary" onClick={save}>{saved ? '[Saved]' : 'Save'}</button>
       </div>
