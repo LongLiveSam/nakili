@@ -22,39 +22,43 @@ function AppShell({ children }: { children: React.ReactNode }) {
     <div className="app-frame">
       <a className="skip-link" href="#main">Skip to content</a>
       <header className="app-header">
-        <button className="brand" onClick={() => navigate('home')} aria-label="Nakili home">
-          Nakili
-        </button>
-        <nav className="header-nav" aria-label="Site">
-          <button aria-current={view === 'home' ? 'page' : undefined} onClick={() => navigate('home')}>
-            Recordings
+        <div className="wrap shell-inner">
+          <button className="brand" onClick={() => navigate('home')} aria-label="Nakili home">
+            Nakili
           </button>
-          <button onClick={() => setSettingsOpen(true)}>Settings</button>
-          <button onClick={() => setHelpOpen(true)}>Help</button>
-        </nav>
+          <nav className="header-nav" aria-label="Site">
+            <button aria-current={view === 'home' ? 'page' : undefined} onClick={() => navigate('home')}>
+              Recordings
+            </button>
+            <button onClick={() => setSettingsOpen(true)}>Settings</button>
+            <button onClick={() => setHelpOpen(true)}>Help</button>
+          </nav>
+        </div>
       </header>
 
       {children}
 
       <footer className="app-footer">
-        <span>Local-first dictation. Nothing leaves your browser.</span>
-        <span className="footer-controls">
-          <span className="app-version" title={`Nakili ${APP_VERSION}`}>
-            {versionLabel()}
+        <div className="wrap shell-inner">
+          <span>Local-first dictation. Nothing leaves your browser.</span>
+          <span className="footer-controls">
+            <span className="app-version" title={`Nakili ${APP_VERSION}`}>
+              {versionLabel()}
+            </span>
+            <a
+              href={`mailto:culturedrabbit@gmail.com?subject=${encodeURIComponent('Nakili feedback')}&body=${encodeURIComponent(`\n\n—\n${navigator.userAgent}`)}`}
+            >
+              Contact
+            </a>
+            <button
+              className="ghost"
+              onClick={cycleMode}
+              aria-label={`Color mode: ${MODE_LABELS[mode]}. Activate to cycle`}
+            >
+              Mode: {MODE_LABELS[mode]}
+            </button>
           </span>
-          <a
-            href={`mailto:culturedrabbit@gmail.com?subject=${encodeURIComponent('Nakili feedback')}&body=${encodeURIComponent(`\n\n—\n${navigator.userAgent}`)}`}
-          >
-            Contact
-          </a>
-          <button
-            className="ghost"
-            onClick={cycleMode}
-            aria-label={`Color mode: ${MODE_LABELS[mode]}. Activate to cycle`}
-          >
-            Mode: {MODE_LABELS[mode]}
-          </button>
-        </span>
+        </div>
       </footer>
 
       <HelpDialog open={helpOpen} onClose={() => setHelpOpen(false)} />

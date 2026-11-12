@@ -7,7 +7,8 @@ import { MicIcon, PlayIcon, SearchIcon } from '../../ui/icons';
 export function Landing({ onStart, onImport }: { onStart: () => void; onImport?: () => void }) {
   return (
     <div className="landing">
-      <section className="hero" aria-label="Introduction">
+      <div className="wrap">
+      <section className="hero" aria-label="Introduction" data-enter>
         <div className="hero-copy">
           <div className="dot-block hero-dots" aria-hidden="true" />
           <h1 className="hero-title">
@@ -50,7 +51,7 @@ export function Landing({ onStart, onImport }: { onStart: () => void; onImport?:
         <div className="steps">
           <div>
             <MicIcon size={20} />
-            <h2>Live transcript while you speak</h2>
+            <h2>Live transcription</h2>
             <p>
               Words appear as you talk. Say “new paragraph” or “period” and
               Nakili writes the structure for you.
@@ -58,7 +59,7 @@ export function Landing({ onStart, onImport }: { onStart: () => void; onImport?:
           </div>
           <div>
             <SearchIcon size={20} />
-            <h2>Clip playback beside the text</h2>
+            <h2>Clip playback</h2>
             <p>
               Click any sentence to highlight its 30-second clip, listen to the
               exact moment, and fix it in place.
@@ -66,7 +67,7 @@ export function Landing({ onStart, onImport }: { onStart: () => void; onImport?:
           </div>
           <div>
             <PlayIcon size={20} />
-            <h2>Text, Markdown, and audio exports</h2>
+            <h2>Text and audio exports</h2>
             <p>
               Download the transcript as text or Markdown, and the audio as MP3,
               WAV, or the original recording.
@@ -93,6 +94,7 @@ export function Landing({ onStart, onImport }: { onStart: () => void; onImport?:
         </p>
         <button className="cta" onClick={onStart}>Start dictating</button>
       </section>
+      </div>
     </div>
   );
 }

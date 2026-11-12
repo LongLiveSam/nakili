@@ -121,6 +121,7 @@ export default function LibraryView() {
         type="file"
         accept="audio/*"
         className="visually-hidden"
+        tabIndex={-1}
         aria-label="Import an audio file"
         onChange={(e) => {
           const file = e.target.files?.[0];

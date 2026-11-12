@@ -41,7 +41,7 @@
   --border: #d1d5cc;
   --border-visible: #b3b9ae;
   --text-disabled: #8a9086;
-  --text-secondary: #565c52;
+  --text-secondary: #4c4e4a;
   --text-primary: #171a16;
   --text-display: #0c0f0b;
   --interactive: #b23a2b;
@@ -245,14 +245,23 @@ body { margin: 0; min-height: 100%; }
 .app-frame { flex: 1; min-height: 100%; display: flex; flex-direction: column; }
 
 .app-header {
+  display: block;
+  padding: 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+.wrap { width: 100%; }
+.shell-inner {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 var(--space-md);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-md);
-  padding: var(--space-xs) var(--space-md);
-  border-bottom: 1px solid var(--border);
-  background: var(--surface);
 }
+.app-header .shell-inner { padding-top: var(--space-xs); padding-bottom: var(--space-xs); }
 .brand {
   flex-shrink: 0;
   font-family: var(--font-display);
@@ -289,14 +298,18 @@ body { margin: 0; min-height: 100%; }
 
 .app-footer {
   margin-top: auto;
-  display: flex; align-items: center; justify-content: space-between;
-  flex-wrap: wrap; row-gap: var(--space-sm);
-  gap: var(--space-md); padding: var(--space-sm) var(--space-md);
+  display: block;
+  padding: 0;
   border-top: 1px solid var(--border);
   color: var(--text-secondary); font-size: var(--caption);
   background: var(--surface);
 }
-.app-footer > span:first-child { flex: 1 1 220px; line-height: 1.5; }
+.app-footer .shell-inner {
+  align-items: center;
+  padding-top: var(--space-sm);
+  padding-bottom: var(--space-sm);
+}
+.app-footer .shell-inner > span:first-child { flex: 1 1 220px; line-height: 1.5; }
 .footer-controls {
   display: flex; align-items: center; flex-wrap: wrap;
   gap: var(--space-xs) var(--space-md);
@@ -409,7 +422,7 @@ dialog[open] { animation: dialog-in var(--speed) ease-out; }
   display: flex;
   gap: var(--space-lg);
   align-items: flex-start;
-  max-width: 1200px;
+  max-width: 1100px;
   margin: 0 auto;
   width: 100%;
 }
@@ -547,7 +560,7 @@ dialog[open] { animation: dialog-in var(--speed) ease-out; }
 .empty-state p { margin: 0; color: var(--text-disabled); max-width: 420px; }
 
 .landing {
-  max-width: 1000px;
+  max-width: 1100px;
   margin: 0 auto;
   width: 100%;
   padding: var(--space-xl) 0 var(--space-3xl);
@@ -560,6 +573,17 @@ dialog[open] { animation: dialog-in var(--speed) ease-out; }
   padding: var(--space-sm) 0 var(--space-md);
 }
 .hero-copy { min-width: 0; }
+.hero-copy, .hero-preview {
+  animation: hero-in 420ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.hero-preview { animation-delay: 80ms; }
+@keyframes hero-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-copy, .hero-preview { animation: none; }
+}
 .hero-actions {
   display: flex; flex-wrap: wrap; align-items: center;
   gap: var(--space-sm);
@@ -646,7 +670,7 @@ dialog[open] { animation: dialog-in var(--speed) ease-out; }
 .landing-close {
   display: flex; flex-wrap: wrap; align-items: center;
   justify-content: flex-start; gap: var(--space-md) var(--space-lg);
-  padding-top: var(--space-lg);
+  padding-top: var(--space-sm);
   border-top: 1px solid var(--border);
 }
 .landing-close .status-line { margin: 0; max-width: 560px; }
@@ -666,7 +690,7 @@ dialog[open] { animation: dialog-in var(--speed) ease-out; }
   font-size: var(--body-size); max-width: 46ch;
   text-wrap: pretty;
 }
-.feat-list { list-style: none; padding: 0; margin: var(--space-md) 0 0; }
+.feat-list { list-style: none; padding: 0 0 var(--space-md); margin: var(--space-md) 0 0; }
 .feat-list li {
   display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-md);
   border-bottom: 1px solid var(--border);
@@ -768,7 +792,7 @@ dialog[open] { animation: dialog-in var(--speed) ease-out; }
 }
 
 @media (max-width: 640px) {
-  .app-header { padding: var(--space-xs) var(--space-md); gap: var(--space-sm); }
+  .app-header .shell-inner { gap: var(--space-sm); }
   .brand { font-size: 18px; padding: 4px 6px; }
   .header-nav { gap: 0; }
   .header-nav button {
@@ -778,8 +802,8 @@ dialog[open] { animation: dialog-in var(--speed) ease-out; }
   }
   .header-nav button[aria-current='page']::before,
   .header-nav button[aria-current='page']::after { content: none; }
-  .app-footer { flex-direction: column; align-items: flex-start; }
-  .app-footer > span:first-child { flex: 0 0 auto; }
+  .app-footer .shell-inner { flex-direction: column; align-items: flex-start; }
+  .app-footer .shell-inner > span:first-child { flex: 0 0 auto; }
   .footer-controls { width: 100%; justify-content: flex-start; }
   .footer-controls a,
   .footer-controls button {
