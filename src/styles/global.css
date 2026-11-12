@@ -767,18 +767,7 @@ dialog[open] { animation: dialog-in var(--speed) ease-out; }
   font-size: var(--subheading);
   line-height: 1.55;
   color: var(--text-primary);
-}
-.preview-caret {
-  display: inline-block;
-  width: 2px; height: 1.05em;
-  margin-left: 2px;
-  vertical-align: -0.15em;
-  background: var(--text-primary);
-  animation: caret-blink 1s steps(1, end) infinite;
-}
-@keyframes caret-blink {
-  0%, 49% { opacity: 1; }
-  50%, 100% { opacity: 0; }
+  text-wrap: pretty;
 }
 .preview-clips {
   display: grid; gap: 0;

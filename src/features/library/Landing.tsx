@@ -38,7 +38,6 @@ export function Landing({ onStart, onImport }: { onStart: () => void; onImport?:
           </div>
           <p className="preview-text">
             Quiet software does not compete for attention.
-            <span className="preview-caret" />
           </p>
           <div className="preview-clips">
             <span className="preview-clip on"><span>Clip 1</span><span>0:00–0:30</span></span>
