@@ -4,6 +4,10 @@ Nakili uses decimal minor steps: `0.01`, `0.02` … `0.09`, `0.1` … `0.5`, `1.
 `npm run release -- bump` moves one step; `npm run release -- set 0.5` jumps.
 Every release is a git tag (`v0.01`, `v0.5`, `v1.0`).
 
+## v0.05 — 2026-11-12
+
+- Broadcast Desk: a new visual world with warm studio light and dark modes, a signal-red tally, a serif transcript, a cue-sheet clip stack, icons on Download and Rename, and a system-default color mode. PRODUCT.md and DESIGN.md added; the Nothing design language is retired.
+
 ## v0.04 — 2026-11-12
 
 - Impeccable slop pass: removed the decorative blinking caret from the landing preview, tightened the preview line break, and recorded the deliberate brand-font exception (Inter for the paper skin, Space Grotesk for Nothing) in the detector config.
