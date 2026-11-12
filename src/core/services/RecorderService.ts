@@ -23,6 +23,7 @@ interface RecorderDeps {
   createRecorder?: (stream: MediaStream) => MediaRecorderLike;
   setInterval?: typeof setInterval;
   clearInterval?: typeof clearInterval;
+  now?: () => number;
 }
 
 export class RecorderService {
@@ -32,6 +33,7 @@ export class RecorderService {
   private createRecorder: (stream: MediaStream) => MediaRecorderLike;
   private setIntervalFn: typeof setInterval;
   private clearIntervalFn: typeof clearInterval;
+  private now: () => number;
 
   private stream: MediaStream | null = null;
   private recorder: MediaRecorderLike | null = null;
@@ -40,6 +42,11 @@ export class RecorderService {
   private running = false;
   private paused = false;
   private indexBase = 0;
+  private startOffsetSec = 0;
+  /** Recorded seconds so far — pauses are excluded, so this is the audio clock. */
+  private recordedSec = 0;
+  private chunkStartedAtMs = 0;
+  private pendingStop: Promise<void> | null = null;
   private audioCtx: AudioContext | null = null;
   private analyser: AnalyserNode | null = null;
 
@@ -73,6 +80,7 @@ export class RecorderService {
       });
     this.setIntervalFn = deps.setInterval ?? setInterval.bind(globalThis);
     this.clearIntervalFn = deps.clearInterval ?? clearInterval.bind(globalThis);
+    this.now = deps.now ?? (() => Date.now());
   }
 
   async requestMicrophone(): Promise<void> {
@@ -93,21 +101,26 @@ export class RecorderService {
     return this.analyser;
   }
 
-  start(opts: { startIndex?: number } = {}): void {
+  start(opts: { startIndex?: number; startOffsetSec?: number } = {}): void {
     if (!this.stream) throw new Error('microphone not acquired: call requestMicrophone() first');
     this.chunks = [];
     this.indexBase = opts.startIndex ?? 0;
+    this.startOffsetSec = opts.startOffsetSec ?? 0;
+    this.recordedSec = 0;
     this.running = true;
+    this.paused = false;
+    this.pendingStop = null;
     this.beginChunk(this.indexBase);
-    this.timerId = this.setIntervalFn(() => this.rollOver(), CHUNK_SECONDS * 1000);
+    this.startTimer();
   }
 
   async stop(): Promise<RecordedChunk[]> {
     if (!this.running) return [];
     this.running = false;
-    if (this.timerId !== null) {
-      this.clearIntervalFn(this.timerId);
-      this.timerId = null;
+    this.clearTimer();
+    if (this.pendingStop) {
+      await this.pendingStop;
+      this.pendingStop = null;
     }
     await this.finishCurrentChunk();
     this.recorder = null;
@@ -122,54 +135,70 @@ export class RecorderService {
     this.audioCtx = null;
   }
 
-  /** Halt capture + rollover mid-session; resume() continues the same chunk. */
+  /**
+   * Pause-aligned chunking: the current clip is closed at the pause point and
+   * the next one starts on resume. Paused time therefore never enters the audio
+   * timeline, so clip offsets and transcript timestamps stay aligned.
+   */
   pause(): void {
     if (!this.running || this.paused) return;
     this.paused = true;
+    this.clearTimer();
+    this.pendingStop = this.finishCurrentChunk();
+  }
+
+  async resume(): Promise<void> {
+    if (!this.paused || !this.running) return;
+    if (this.pendingStop) {
+      await this.pendingStop;
+      this.pendingStop = null;
+    }
+    if (!this.running) return;
+    this.paused = false;
+    this.beginChunk(this.indexBase + this.chunks.length);
+    this.startTimer();
+  }
+
+  private startTimer(): void {
+    this.clearTimer();
+    this.timerId = this.setIntervalFn(() => this.rollOver(), CHUNK_SECONDS * 1000);
+  }
+
+  private clearTimer(): void {
     if (this.timerId !== null) {
       this.clearIntervalFn(this.timerId);
       this.timerId = null;
     }
-    try { this.recorder?.pause?.(); } catch { /* ignore */ }
-  }
-
-  resume(): void {
-    if (!this.paused || !this.running) return;
-    this.paused = false;
-    try { this.recorder?.resume?.(); } catch { /* ignore */ }
-    this.timerId = this.setIntervalFn(() => this.rollOver(), CHUNK_SECONDS * 1000);
   }
 
   private beginChunk(index: number): void {
-    this.recorder = this.createRecorder(this.stream!);
-    const startedAtMs = Date.now();
-    this.recorder.onerror = () => {
+    const rec = this.createRecorder(this.stream!);
+    this.recorder = rec;
+    this.chunkStartedAtMs = this.now();
+    const startTimeSec = this.startOffsetSec + this.recordedSec;
+    rec.onerror = () => {
       this.onError?.('Recording error');
     };
-    this.recorder.ondataavailable = (e) => {
-      this.chunks.push({
-        index,
-        blob: e.data,
-        startTimeSec: index * CHUNK_SECONDS,
-        durationSec: (Date.now() - startedAtMs) / 1000,
-      });
+    rec.ondataavailable = (e) => {
+      const durationSec = Math.max(0, (this.now() - this.chunkStartedAtMs) / 1000);
+      this.chunks.push({ index, blob: e.data, startTimeSec, durationSec });
+      this.recordedSec += durationSec;
     };
-    this.recorder.start();
+    rec.start();
   }
 
   /**
    * Rollover: the flushing chunk pushes itself via ondataavailable during
-   * .stop() (fires synchronously before onstop), occupying slot `chunks.length`
-   * at call time. The next chunk therefore begins at chunks.length (post-flush)
-   * which equals pre-flush length + 1.
+   * .stop() (fires synchronously before onstop), so `recordedSec` is already
+   * updated when the next chunk begins.
    */
   private rollOver(): void {
-    if (!this.running || !this.recorder) return;
+    if (!this.running || this.paused || !this.recorder) return;
     const current = this.recorder;
     const nextIndex = this.indexBase + this.chunks.length + 1;
     current.onstop = () => {
       current.onstop = null;
-      if (this.running) this.beginChunk(nextIndex);
+      if (this.running && !this.paused) this.beginChunk(nextIndex);
     };
     current.stop();
   }
@@ -177,6 +206,7 @@ export class RecorderService {
   private finishCurrentChunk(): Promise<void> {
     const current = this.recorder;
     if (!current || current.state === 'inactive') return Promise.resolve();
+    this.recorder = null;
     return new Promise<void>((resolve) => {
       const prevOnStop = current.onstop;
       current.onstop = () => {

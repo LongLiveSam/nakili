@@ -49,6 +49,24 @@ describe('SpeechService', () => {
     expect(finals).toEqual([['hello', 2.5]]);
   });
 
+  it('excludes paused time from final timestamps', () => {
+    const rec = makeFakeRecognition();
+    let t = 1000;
+    const svc = new SpeechService({ createRecognition: () => rec, now: () => t });
+    const finals: Array<[string, number]> = [];
+    svc.onFinal = (text, elapsed) => finals.push([text, elapsed]);
+
+    svc.start();
+    t = 1002; // 2 s of speech
+    svc.pause();
+    t = 1012; // 10 s paused
+    svc.resume();
+    t = 1015; // 3 s more speech
+    rec.onresult!(resultEvent([{ text: 'after pause', isFinal: true }]));
+
+    expect(finals).toEqual([['after pause', 5]]);
+  });
+
   it('throttles interim callbacks to ~7/s but always emits finals', () => {
     const rec = makeFakeRecognition();
     let t = 1000;

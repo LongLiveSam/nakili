@@ -45,16 +45,19 @@ describe('RecorderService', () => {
     blobSeq = 0;
     const timers = makeManualTimers();
     const created: MediaRecorderLike[] = [];
+    let clock = 0;
     const svc = new RecorderService({
       getUserMedia: async () => ({}) as MediaStream,
       createRecorder: () => { const r = makeFakeRecorder(); created.push(r); return r; },
       setInterval: timers.setInterval,
       clearInterval: timers.clearInterval,
+      now: () => clock,
     });
     await svc.requestMicrophone();
     svc.start();
     expect(created.length).toBe(1);
 
+    clock = 30_000;
     timers.tickAll(); // one 30 s boundary elapses
     await flush();
     expect(created.length).toBe(2);
@@ -65,8 +68,68 @@ describe('RecorderService', () => {
     await flush();
     expect(chunks.map((c) => c.index)).toEqual([0, 1]);
     expect(chunks.map((c) => c.startTimeSec)).toEqual([0, 30]);
+    expect(chunks[0].durationSec).toBe(30);
     expect(chunks[0].blob.size).toBeGreaterThan(0);
     expect(chunks[1].blob.size).toBeGreaterThan(0);
+  });
+
+  it('closes the clip on pause and starts the next at the recorded offset', async () => {
+    blobSeq = 0;
+    const timers = makeManualTimers();
+    const created: MediaRecorderLike[] = [];
+    let clock = 0;
+    const svc = new RecorderService({
+      getUserMedia: async () => ({}) as MediaStream,
+      createRecorder: () => { const r = makeFakeRecorder(); created.push(r); return r; },
+      setInterval: timers.setInterval,
+      clearInterval: timers.clearInterval,
+      now: () => clock,
+    });
+    await svc.requestMicrophone();
+    svc.start();
+
+    clock = 10_000;
+    svc.pause();
+    await flush();
+    expect(created[0].state).toBe('inactive');
+
+    // Paused time must not create a clip or advance the audio clock.
+    clock = 25_000;
+    timers.tickAll();
+    await flush();
+    expect(created.length).toBe(1);
+
+    await svc.resume();
+    expect(created.length).toBe(2);
+    expect(created[1].state).toBe('recording');
+
+    clock = 40_000;
+    const chunks = await svc.stop();
+    await flush();
+    expect(chunks.map((c) => c.index)).toEqual([0, 1]);
+    expect(chunks.map((c) => c.startTimeSec)).toEqual([0, 10]);
+    expect(chunks.map((c) => c.durationSec)).toEqual([10, 15]);
+  });
+
+  it('offsets clip starts when appending to an existing recording', async () => {
+    blobSeq = 0;
+    const timers = makeManualTimers();
+    let clock = 0;
+    const svc = new RecorderService({
+      getUserMedia: async () => ({}) as MediaStream,
+      createRecorder: () => makeFakeRecorder(),
+      setInterval: timers.setInterval,
+      clearInterval: timers.clearInterval,
+      now: () => clock,
+    });
+    await svc.requestMicrophone();
+    svc.start({ startIndex: 4, startOffsetSec: 120 });
+    clock = 5_000;
+    const chunks = await svc.stop();
+    await flush();
+    expect(chunks[0].index).toBe(4);
+    expect(chunks[0].startTimeSec).toBe(120);
+    expect(chunks[0].durationSec).toBe(5);
   });
 
   it('does not roll over after stop', async () => {

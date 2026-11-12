@@ -96,4 +96,14 @@ describe('buildTranscript', () => {
   it('returns empty for no finals', () => {
     expect(buildTranscript([])).toEqual({ text: '', segments: [] });
   });
+
+  it('maps phrases to pause-aligned clips by their real start times', () => {
+    const finals: FinalResult[] = [
+      { text: 'before pause', startTimeSec: 2, endTimeSec: 4 },
+      { text: 'after pause', startTimeSec: 12, endTimeSec: 14 },
+    ];
+    const { segments } = buildTranscript(finals, [0, 10]);
+    expect(segments[0].audioChunkIndex).toBe(0);
+    expect(segments[1].audioChunkIndex).toBe(1);
+  });
 });

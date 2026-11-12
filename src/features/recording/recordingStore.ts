@@ -25,7 +25,6 @@ function featureOn(key: string): boolean {
 let speech: SpeechService | null = null;
 let recorder: RecorderService | null = null;
 let ticker: ReturnType<typeof setInterval> | null = null;
-let startedAtMs = 0;
 let currentDraftId: string | null = null;
 let silenceTicks = 0;
 let lastBreakSec = -30;
@@ -187,9 +186,11 @@ export const useRecordingStore = create<RecordingState>((set, get) => ({
     recorder!.onError = () => {
       set({ recorderNotice: '[NOTICE: AUDIO RECORDING ERROR — CAPTURED AUDIO IS KEPT]' });
     };
-    recorder!.start({ startIndex: appendBase?.indexBase ?? 0 });
+    recorder!.start({
+      startIndex: appendBase?.indexBase ?? 0,
+      startOffsetSec: appendBase?.timeBase ?? 0,
+    });
     speech!.start();
-    startedAtMs = Date.now();
     void (navigator as Navigator & { wakeLock?: { request(t: string): Promise<{ release(): Promise<void> }> } })
       .wakeLock?.request('screen')
       .then((wl) => { wakeLockSentinel = wl; })
@@ -268,11 +269,11 @@ export const useRecordingStore = create<RecordingState>((set, get) => ({
     if (!s.paused) {
       if (ticker) { clearInterval(ticker); ticker = null; }
       speech?.pause();
-      recorder?.pause?.();
+      void recorder?.pause?.();
       set({ paused: 'user' });
     } else {
       speech?.resume();
-      recorder?.resume?.();
+      void recorder?.resume?.();
       ticker = setInterval(() => set((st) => ({ elapsedSec: st.elapsedSec + 0.25 })), 250);
       set({ paused: false });
     }
@@ -286,14 +287,19 @@ export const useRecordingStore = create<RecordingState>((set, get) => ({
     const { finals, elapsedSec } = get();
     const base = appendBase;
     appendBase = null;
+    // The audio clock excludes pauses, so sum the real clip lengths instead of
+    // wall-clock time. This keeps duration, clip offsets and transcript times
+    // on the same timeline.
+    const recordedSec = chunks.reduce((sum, c) => sum + c.durationSec, 0);
     const durationSec = base
-      ? base.timeBase + ((startedAtMs > 0 ? (Date.now() - startedAtMs) / 1000 : 0))
-      : startedAtMs > 0
-        ? (Date.now() - startedAtMs) / 1000
+      ? base.timeBase + recordedSec
+      : recordedSec > 0
+        ? recordedSec
         : elapsedSec;
-    startedAtMs = 0;
-    let builtText = buildTranscript(finals).text;
-    let newSegments: TranscriptSegment[] = buildTranscript(finals).segments.map((s) => ({
+    const chunkStarts = chunks.map((c) => c.startTimeSec);
+    const built = buildTranscript(finals, chunkStarts);
+    let builtText = built.text;
+    let newSegments: TranscriptSegment[] = built.segments.map((s) => ({
       ...s,
       id: '',
       articleId,
@@ -324,7 +330,8 @@ export const useRecordingStore = create<RecordingState>((set, get) => ({
     if (chunks.length > 0) {
       await saveSessionAudio(articleId, chunks.map((c) => c.blob), {
         startIndex: base?.indexBase ?? 0,
-        startOffsetSec: base?.timeBase ?? 0,
+        startTimesSec: chunks.map((c) => c.startTimeSec),
+        durationsSec: chunks.map((c) => c.durationSec),
       });
     }
 

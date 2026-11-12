@@ -65,6 +65,17 @@ describe('audio', () => {
     expect(chunks[0]).toMatchObject({ startTimeSec: 0, endTimeSec: 11, durationSec: 11 });
     expect(chunks[1]).toMatchObject({ startTimeSec: 30, endTimeSec: 34.5, durationSec: 4.5 });
   });
+
+  it('uses explicit start times for pause-aligned clips', async () => {
+    await putArticle(makeArticle());
+    await saveSessionAudio('a1', [new Blob(['a']), new Blob(['b'])], {
+      startTimesSec: [0, 10],
+      durationsSec: [10, 15],
+    });
+    const chunks = await getChunks('a1');
+    expect(chunks[0]).toMatchObject({ startTimeSec: 0, endTimeSec: 10 });
+    expect(chunks[1]).toMatchObject({ startTimeSec: 10, endTimeSec: 25 });
+  });
 });
 
 describe('segments', () => {

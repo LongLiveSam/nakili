@@ -36,6 +36,8 @@ export async function saveSessionAudio(
     chunkSeconds?: number;
     /** Real per-clip lengths (imports, trimmed audio); defaults to chunkSeconds. */
     durationsSec?: number[];
+    /** Absolute clip start times (pause-aligned recording); overrides the grid. */
+    startTimesSec?: number[];
   } = {},
 ): Promise<string[]> {
   const startIndex = opts.startIndex ?? 0;
@@ -44,7 +46,7 @@ export async function saveSessionAudio(
   const keys = blobs.map(() => uuid());
   const rows: AudioChunk[] = blobs.map((_, i) => {
     const durationSec = opts.durationsSec?.[i] ?? chunkSeconds;
-    const startTimeSec = startOffsetSec + i * chunkSeconds;
+    const startTimeSec = opts.startTimesSec?.[i] ?? startOffsetSec + i * chunkSeconds;
     return {
       id: uuid(),
       articleId,

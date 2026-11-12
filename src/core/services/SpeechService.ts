@@ -58,6 +58,8 @@ export class SpeechService {
   private now: () => number;
   private schedule: (ms: number, cb: () => void) => void;
   private startedAt = 0;
+  private pausedAt = 0;
+  private pausedTotal = 0;
   private pendingRestart = false;
   private restartError: string | null = null;
   private vocabulary: string[] = [];
@@ -125,6 +127,8 @@ export class SpeechService {
       throw new Error('speech-recognition-failed-to-start');
     }
     this.startedAt = this.now();
+    this.pausedAt = 0;
+    this.pausedTotal = 0;
   }
 
   stop(): void {
@@ -134,19 +138,31 @@ export class SpeechService {
     this.recognition?.stop();
   }
 
-  /** Soft pause: stop recognition but keep the timeline (no startedAt reset). */
+  /** Soft pause: stop recognition and freeze the timeline. */
   pause(): void {
     if (!this.recognition) return;
     this.paused = true;
+    this.pausedAt = this.now();
     this.pendingRestart = false;
     try { this.recognition.stop(); } catch { /* ignore */ }
   }
 
-  /** Resume after pause(): restart recognition on the existing clock. */
+  /** Resume after pause(): restart recognition and continue the audio clock. */
   resume(): void {
     if (!this.paused || !this.recognition) return;
     this.paused = false;
+    if (this.pausedAt > 0) {
+      this.pausedTotal += this.now() - this.pausedAt;
+      this.pausedAt = 0;
+    }
     try { this.recognition.start(); } catch { /* already running */ }
+  }
+
+  /** Seconds of speech time, excluding user pauses. */
+  private elapsed(): number {
+    const t = this.now();
+    const pausedNow = this.pausedAt > 0 ? t - this.pausedAt : 0;
+    return t - this.startedAt - this.pausedTotal - pausedNow;
   }
 
   private paused = false;
@@ -168,7 +184,7 @@ export class SpeechService {
       if (!text) continue;
       if (result.isFinal) {
         this.pendingInterim = '';
-        this.onFinal?.(text, this.now() - this.startedAt);
+        this.onFinal?.(text, this.elapsed());
       } else {
         // Throttle interim renders to ~7/s — the final always supersedes.
         const t = this.now();

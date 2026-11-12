@@ -1,7 +1,23 @@
 export const CHUNK_SECONDS = 30;
 
-export function chunkIndexForElapsed(seconds: number): number {
-  return Math.floor(seconds / CHUNK_SECONDS);
+export function chunkIndexForElapsed(seconds: number, chunkStartsSec?: number[]): number {
+  if (!chunkStartsSec || chunkStartsSec.length === 0) {
+    return Math.floor(seconds / CHUNK_SECONDS);
+  }
+  // Rightmost chunk whose start is at or before `seconds`.
+  let lo = 0;
+  let hi = chunkStartsSec.length - 1;
+  let index = 0;
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1;
+    if (chunkStartsSec[mid] <= seconds) {
+      index = mid;
+      lo = mid + 1;
+    } else {
+      hi = mid - 1;
+    }
+  }
+  return index;
 }
 
 /**
@@ -80,7 +96,10 @@ export function adjustSegmentsAfterEdit(
   });
 }
 
-export function buildTranscript(finals: FinalResult[]): {
+export function buildTranscript(
+  finals: FinalResult[],
+  chunkStartsSec?: number[],
+): {
   text: string;
   segments: Omit<TranscriptSegment, 'id' | 'articleId'>[];
 } {
@@ -96,7 +115,7 @@ export function buildTranscript(finals: FinalResult[]): {
       startCharOffset: wordStart,
       endCharOffset: wordStart + f.text.length - 1,
       text: f.text,
-      audioChunkIndex: chunkIndexForElapsed(f.startTimeSec),
+      audioChunkIndex: chunkIndexForElapsed(f.startTimeSec, chunkStartsSec),
       approximate: false,
     });
   }

@@ -7,6 +7,16 @@ describe('chunkIndexForElapsed', () => {
   ])('%fs -> chunk %i', (sec, expected) => {
     expect(chunkIndexForElapsed(sec)).toBe(expected);
   });
+
+  it('uses real clip starts when pause-aligned chunks are supplied', () => {
+    const starts = [0, 10, 40];
+    expect(chunkIndexForElapsed(0, starts)).toBe(0);
+    expect(chunkIndexForElapsed(9.9, starts)).toBe(0);
+    expect(chunkIndexForElapsed(10, starts)).toBe(1);
+    expect(chunkIndexForElapsed(39.9, starts)).toBe(1);
+    expect(chunkIndexForElapsed(40, starts)).toBe(2);
+    expect(chunkIndexForElapsed(120, starts)).toBe(2);
+  });
 });
 
 describe('computeEditRange', () => {
