@@ -54,6 +54,17 @@ describe('audio', () => {
     const blob = await getAudioBlob(keys[0]);
     expect(await blob!.text()).toBe('aa');
   });
+
+  it('uses real clip lengths when supplied (imports, trimmed audio)', async () => {
+    await putArticle(makeArticle());
+    await saveSessionAudio('a1', [new Blob(['a']), new Blob(['b'])], {
+      chunkSeconds: 30,
+      durationsSec: [11, 4.5],
+    });
+    const chunks = await getChunks('a1');
+    expect(chunks[0]).toMatchObject({ startTimeSec: 0, endTimeSec: 11, durationSec: 11 });
+    expect(chunks[1]).toMatchObject({ startTimeSec: 30, endTimeSec: 34.5, durationSec: 4.5 });
+  });
 });
 
 describe('segments', () => {

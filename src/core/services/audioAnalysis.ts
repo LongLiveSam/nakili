@@ -44,8 +44,7 @@ export function detectSilenceRanges(
   return ranges;
 }
 
-/** Snap a character position to the bounds of the word containing it. */
-export function snapToWord(
+/** Snap a character position to the bounds of the word containing it. */export function snapToWord(
   text: string,
   pos: number,
   lo = 0,
@@ -61,4 +60,41 @@ export function snapToWord(
   while (!outOfBounds(start - 1) && !/[\s\n]/.test(text[start - 1] ?? ' ')) start--;
   while (!outOfBounds(end) && !/[\s\n]/.test(text[end] ?? ' ')) end++;
   return [start, end];
+}
+
+/**
+ * Drop leading and trailing silence before transcription (faster-whisper's
+ * `vad_filter` idea, without a second model). Returns an empty array when the
+ * whole clip is below the noise floor, so the caller can skip the model.
+ */
+export function trimSilence(
+  pcm: Float32Array,
+  sampleRate: number,
+  opts: { threshold?: number; padMs?: number } = {},
+): Float32Array {
+  const threshold = opts.threshold ?? 0.004;
+  const pad = Math.max(0, Math.floor((sampleRate * (opts.padMs ?? 120)) / 1000));
+  const block = Math.max(1, Math.floor(sampleRate * 0.02));
+
+  const loudBlock = (start: number): boolean => {
+    const end = Math.min(pcm.length, start + block);
+    let sum = 0;
+    for (let i = start; i < end; i++) sum += pcm[i] * pcm[i];
+    return Math.sqrt(sum / Math.max(1, end - start)) >= threshold;
+  };
+
+  let first = -1;
+  for (let i = 0; i < pcm.length; i += block) {
+    if (loudBlock(i)) { first = i; break; }
+  }
+  if (first < 0) return new Float32Array(0);
+
+  let last = pcm.length;
+  for (let i = pcm.length - block; i >= 0; i -= block) {
+    if (loudBlock(Math.max(0, i))) { last = Math.min(pcm.length, i + block); break; }
+  }
+
+  const start = Math.max(0, first - pad);
+  const end = Math.min(pcm.length, last + pad);
+  return pcm.slice(start, end);
 }

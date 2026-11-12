@@ -28,7 +28,7 @@ if (!HTMLDialogElement.prototype.showModal) {
 beforeEach(async () => {
   await db.delete();
   await db.open();
-  useLibraryStore.setState({ articles: [], loaded: false });
+  useLibraryStore.setState({ articles: [], loaded: true });
   useAppStore.setState({ view: 'home', activeArticleId: null });
 });
 
@@ -60,6 +60,14 @@ describe('library', () => {
     await userEvent.type(input, 'zzzz');
     expect(screen.getByText(/no matches/i)).toBeInTheDocument();
     expect(screen.queryByText('My essay')).not.toBeInTheDocument();
+  });
+
+  it('asks for the local engine before importing audio', async () => {
+    localStorage.removeItem('nakili-whisper-beta');
+    await seed('My essay');
+    render(<LibraryView />);
+    await userEvent.click(await screen.findByRole('button', { name: /import audio/i }));
+    expect(screen.getByText(/enable the local engine in settings/i)).toBeInTheDocument();
   });
 
   it('creates an article and navigates to record view with its id', async () => {

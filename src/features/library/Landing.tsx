@@ -6,7 +6,7 @@ import { MicIcon, PlayIcon, SearchIcon } from '../../ui/icons';
  * One expressive moment: the oversized dot-matrix wordmark, paired with a
  * plain preview of the real editor.
  */
-export function Landing({ onStart }: { onStart: () => void }) {
+export function Landing({ onStart, onImport }: { onStart: () => void; onImport?: () => void }) {
   return (
     <div className="landing">
       <section className="hero" aria-label="Introduction">
@@ -19,9 +19,16 @@ export function Landing({ onStart }: { onStart: () => void }) {
           <p className="tagline">
             Dictate a draft, edit the words in place, and keep the audio on your device.
           </p>
-          <button className="primary" onClick={onStart}>
-            Start dictating
-          </button>
+          <div className="hero-actions">
+            <button className="primary" onClick={onStart}>
+              Start dictating
+            </button>
+            {onImport && (
+              <button className="ghost" onClick={onImport}>
+                Import an audio file
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="hero-preview" aria-hidden="true">

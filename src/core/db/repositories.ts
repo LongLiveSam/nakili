@@ -30,21 +30,31 @@ export async function deleteArticleCascade(id: string): Promise<void> {
 export async function saveSessionAudio(
   articleId: string,
   blobs: Blob[],
-  opts: { startIndex?: number; startOffsetSec?: number; chunkSeconds?: number } = {},
+  opts: {
+    startIndex?: number;
+    startOffsetSec?: number;
+    chunkSeconds?: number;
+    /** Real per-clip lengths (imports, trimmed audio); defaults to chunkSeconds. */
+    durationsSec?: number[];
+  } = {},
 ): Promise<string[]> {
   const startIndex = opts.startIndex ?? 0;
   const startOffsetSec = opts.startOffsetSec ?? 0;
   const chunkSeconds = opts.chunkSeconds ?? 30;
   const keys = blobs.map(() => uuid());
-  const rows: AudioChunk[] = blobs.map((_, i) => ({
-    id: uuid(),
-    articleId,
-    index: startIndex + i,
-    startTimeSec: startOffsetSec + i * chunkSeconds,
-    endTimeSec: startOffsetSec + (i + 1) * chunkSeconds,
-    blobKey: keys[i],
-    durationSec: chunkSeconds,
-  }));
+  const rows: AudioChunk[] = blobs.map((_, i) => {
+    const durationSec = opts.durationsSec?.[i] ?? chunkSeconds;
+    const startTimeSec = startOffsetSec + i * chunkSeconds;
+    return {
+      id: uuid(),
+      articleId,
+      index: startIndex + i,
+      startTimeSec,
+      endTimeSec: startTimeSec + durationSec,
+      blobKey: keys[i],
+      durationSec,
+    };
+  });
   await db.transaction('rw', db.audioFiles, db.audioChunks, async () => {
     await db.audioFiles.bulkPut(rows.map((_r, i) => ({ key: keys[i], blob: blobs[i] })));
     await db.audioChunks.bulkPut(rows);

@@ -3,13 +3,19 @@ import { exportAllBackup } from '../core/services/ExportService';
 import { storageUsage } from '../core/db/repositories';
 import { db } from '../core/db/db';
 import {
-  PIPELINE_KEYS, loadTransformScript, readVocabularyThreshold,
+  PIPELINE_KEYS, loadTransformScript, readVocabularyThreshold, storageFlag,
 } from '../core/services/pipelineSettings';
 import { getLastSalvageReport } from '../core/services/settingsMigration';
 import {
   RETENTION_KEY, pressureLevel, pressurePercent, readRetentionChoice,
   type RetentionChoice,
 } from '../core/services/retention';
+import { preloadWhisperModel } from '../core/services/localWhisper';
+import {
+  WHISPER_KEYS, WHISPER_MODELS, cachedModelBytes, clearModelCache,
+  formatModelBytes, readWhisperSettings, whisperModelInfo, writeWhisperSettings,
+  type WhisperModelId,
+} from '../core/services/whisperModels';
 import { Toggle } from './Toggle';
 
 interface Props {
@@ -23,7 +29,53 @@ export const RECOGNITION_LANGUAGES = [
   { code: 'es-ES', label: 'Español' },
   { code: 'fr-FR', label: 'Français' },
   { code: 'de-DE', label: 'Deutsch' },
+  { code: 'it-IT', label: 'Italiano' },
   { code: 'pt-BR', label: 'Português (BR)' },
+  { code: 'nl-NL', label: 'Nederlands' },
+  { code: 'pl-PL', label: 'Polski' },
+  { code: 'sv-SE', label: 'Svenska' },
+  { code: 'da-DK', label: 'Dansk' },
+  { code: 'nb-NO', label: 'Norsk' },
+  { code: 'fi-FI', label: 'Suomi' },
+  { code: 'cs-CZ', label: 'Čeština' },
+  { code: 'el-GR', label: 'Ελληνικά' },
+  { code: 'ru-RU', label: 'Русский' },
+  { code: 'uk-UA', label: 'Українська' },
+  { code: 'tr-TR', label: 'Türkçe' },
+  { code: 'he-IL', label: 'עברית' },
+  { code: 'ar-SA', label: 'العربية' },
+  { code: 'hi-IN', label: 'हिन्दी' },
+  { code: 'id-ID', label: 'Bahasa Indonesia' },
+  { code: 'vi-VN', label: 'Tiếng Việt' },
+  { code: 'th-TH', label: 'ไทย' },
+  { code: 'ja-JP', label: '日本語' },
+  { code: 'ko-KR', label: '한국어' },
+  { code: 'zh-CN', label: '中文 (简体)' },
+  { code: 'zh-TW', label: '中文 (繁體)' },
+];
+
+/** Languages Whisper can transcribe; 'auto' lets the model detect it. */
+export const WHISPER_LANGUAGES = [
+  { code: 'auto', label: 'Detect automatically' },
+  { code: 'en', label: 'English' },
+  { code: 'es', label: 'Spanish' },
+  { code: 'fr', label: 'French' },
+  { code: 'de', label: 'German' },
+  { code: 'it', label: 'Italian' },
+  { code: 'pt', label: 'Portuguese' },
+  { code: 'nl', label: 'Dutch' },
+  { code: 'pl', label: 'Polish' },
+  { code: 'ru', label: 'Russian' },
+  { code: 'uk', label: 'Ukrainian' },
+  { code: 'tr', label: 'Turkish' },
+  { code: 'ar', label: 'Arabic' },
+  { code: 'hi', label: 'Hindi' },
+  { code: 'id', label: 'Indonesian' },
+  { code: 'vi', label: 'Vietnamese' },
+  { code: 'th', label: 'Thai' },
+  { code: 'ja', label: 'Japanese' },
+  { code: 'ko', label: 'Korean' },
+  { code: 'zh', label: 'Chinese' },
 ];
 
 function loadStored(key: string, fallback = ''): string {
@@ -56,6 +108,13 @@ export function SettingsDialog({ open, onClose }: Props) {
   const [clearArmed, setClearArmed] = useState(false);
   const [saved, setSaved] = useState(false);
   const [backupStatus, setBackupStatus] = useState<string | null>(null);
+  const [whisperOn, setWhisperOn] = useState(() => storageFlag(WHISPER_KEYS.enabled, false));
+  const [whisperModel, setWhisperModel] = useState<WhisperModelId>(() => readWhisperSettings().model);
+  const [whisperQuantized, setWhisperQuantized] = useState(() => readWhisperSettings().quantized);
+  const [whisperLang, setWhisperLang] = useState(() => readWhisperSettings().language);
+  const [modelBytes, setModelBytes] = useState<number | null>(null);
+  const [modelStatus, setModelStatus] = useState<string | null>(null);
+  const [modelProgress, setModelProgress] = useState<number | null>(null);
 
   useEffect(() => {
     const el = ref.current;
@@ -71,6 +130,15 @@ export function SettingsDialog({ open, onClose }: Props) {
       setSaved(false);
       setBackupStatus(null);
       setClearArmed(false);
+      setWhisperOn(storageFlag(WHISPER_KEYS.enabled, false));
+      const whisper = readWhisperSettings();
+      setWhisperModel(whisper.model);
+      setWhisperQuantized(whisper.quantized);
+      setWhisperLang(whisper.language);
+      setModelStatus(null);
+      setModelProgress(null);
+      setModelBytes(null);
+      void cachedModelBytes(whisper.model).then(setModelBytes);
       void storageUsage().then(setUsage);
       void navigator.mediaDevices
         ?.enumerateDevices()
@@ -85,10 +153,39 @@ export function SettingsDialog({ open, onClose }: Props) {
     saveStored('nakili-vocab', text);
     saveStored('nakili-lang', lang);
     saveStored(PIPELINE_KEYS.script, script);
+    writeWhisperSettings({ model: whisperModel, quantized: whisperQuantized, language: whisperLang });
     if (micId) saveStored('nakili-mic', micId);
     else saveStored('nakili-mic', '');
     setSaved(true);
     setTimeout(() => onClose(), 600);
+  };
+
+  const refreshModelBytes = async (model: WhisperModelId) => {
+    setModelBytes(await cachedModelBytes(model));
+  };
+
+  const downloadModel = async () => {
+    writeWhisperSettings({ model: whisperModel, quantized: whisperQuantized, language: whisperLang });
+    setModelStatus('[DOWNLOADING MODEL…]');
+    setModelProgress(0);
+    try {
+      await preloadWhisperModel((fraction) => {
+        setModelProgress(fraction);
+        setModelStatus(`[DOWNLOADING MODEL ${Math.round(fraction * 100)}%]`);
+      });
+      setModelStatus('[MODEL READY]');
+      await refreshModelBytes(whisperModel);
+    } catch (err) {
+      setModelStatus(`[ERROR: ${err instanceof Error ? err.message : 'DOWNLOAD FAILED'}]`);
+    } finally {
+      setModelProgress(null);
+    }
+  };
+
+  const removeModel = async () => {
+    const removed = await clearModelCache(whisperModel);
+    setModelStatus(removed > 0 ? '[MODEL REMOVED FROM CACHE]' : '[MODEL WAS NOT CACHED]');
+    await refreshModelBytes(whisperModel);
   };
 
   const clearAll = async () => {
@@ -134,6 +231,86 @@ export function SettingsDialog({ open, onClose }: Props) {
           <option key={l.code} value={l.code}>{l.label}</option>
         ))}
       </select>
+
+      <h3>Local engine (beta)</h3>
+      <Toggle
+        label="Transcribe on this device with Whisper"
+        storageKey={WHISPER_KEYS.enabled}
+        defaultOn={false}
+        onChange={setWhisperOn}
+      />
+      {whisperOn && (
+        <>
+          <p>
+            Used for clip re-transcription and audio import. The model downloads
+            once, then runs offline. Nothing is uploaded.
+          </p>
+          <label className="label" htmlFor="whisper-model">Model</label>
+          <select
+            id="whisper-model"
+            value={whisperModel}
+            onChange={(e) => {
+              const model = e.target.value as WhisperModelId;
+              setWhisperModel(model);
+              setModelStatus(null);
+              setModelBytes(null);
+              void refreshModelBytes(model);
+            }}
+            className="field"
+          >
+            {WHISPER_MODELS.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.label} · {m.params} params · ≈{m.downloadMB} MB
+              </option>
+            ))}
+          </select>
+
+          <label className="label" htmlFor="whisper-precision">Precision</label>
+          <select
+            id="whisper-precision"
+            value={whisperQuantized ? 'on' : 'off'}
+            onChange={(e) => {
+              setWhisperQuantized(e.target.value === 'on');
+              setModelStatus(null);
+            }}
+            className="field"
+          >
+            <option value="on">8-bit quantized — smaller, faster</option>
+            <option value="off">Full precision — larger, slightly more accurate</option>
+          </select>
+
+          <label className="label" htmlFor="whisper-lang">Spoken language</label>
+          <select
+            id="whisper-lang"
+            value={whisperLang}
+            onChange={(e) => setWhisperLang(e.target.value)}
+            className="field"
+          >
+            {WHISPER_LANGUAGES.map((l) => (
+              <option key={l.code} value={l.code}>{l.label}</option>
+            ))}
+          </select>
+
+          <p className="status-line" role="status">
+            {modelStatus ??
+              (modelBytes && modelBytes > 0
+                ? `[MODEL CACHED · ${formatModelBytes(modelBytes)}]`
+                : `[MODEL NOT DOWNLOADED · ≈${whisperModelInfo(whisperModel).downloadMB} MB ON FIRST USE]`)}
+          </p>
+          <div className="dialog-actions" style={{ justifyContent: 'flex-start' }}>
+            <button onClick={() => void downloadModel()} disabled={modelProgress !== null}>
+              Download model
+            </button>
+            <button
+              className="ghost"
+              onClick={() => void removeModel()}
+              disabled={modelProgress !== null}
+            >
+              Remove from cache
+            </button>
+          </div>
+        </>
+      )}
 
       <h3>Vocabulary</h3>
       <p>

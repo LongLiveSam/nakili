@@ -22,8 +22,13 @@ Deployment options and the local production server are documented in
 ## Using it
 
 - **New recording** → speak → **Stop** saves transcript + audio.
+- **Import audio** → pick an existing file; it is decoded, split into 30-second
+  clips and transcribed on this device with the local Whisper engine. Enable
+  that engine in **Settings → Local engine** first (one model download, then
+  offline).
 - Click anywhere in a transcript; the matching 30 s clip highlights in the
   Clips panel for instant playback ("~" = approximate match after edits).
+- **Read aloud** narrates the transcript with the system voice.
 - Export from the editor or the ⋮ menu: `.txt` transcript / `.webm` audio.
   Exports always download; nothing is shared through the Web Share API.
 
@@ -33,6 +38,10 @@ Everything stays in your browser's IndexedDB. No account, no server, no sync.
 Speech-to-text is your browser's own service. Clearing site data deletes all
 recordings. Audio export (MP3/WAV) is encoded locally via lamejs — nothing
 is uploaded.
+
+The optional local Whisper engine downloads its model from HuggingFace once and
+caches it in the browser; after that, clip re-transcription and audio import run
+fully offline. The model can be removed again from Settings.
 
 ## Design system
 

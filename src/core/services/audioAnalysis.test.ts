@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { detectSilenceRanges, snapToWord } from './audioAnalysis';
+import { detectSilenceRanges, snapToWord, trimSilence } from './audioAnalysis';
 
 function pcmWithSilence(rate: number): Float32Array {
   // 0.5s tone, 1s silence, 0.5s tone = 2s total
@@ -50,5 +50,27 @@ describe('snapToWord', () => {
 
   it('clamps to bounds on whitespace', () => {
     expect(snapToWord(text, 5, 0, text.length)).toEqual([5, 5]); // the space
+  });
+});
+
+describe('trimSilence', () => {
+  const rate = 16000;
+
+  it('drops leading and trailing silence but keeps the speech', () => {
+    const pcm = new Float32Array(rate * 3);
+    for (let i = rate; i < rate * 2; i++) pcm[i] = 0.4;
+    const trimmed = trimSilence(pcm, rate, { padMs: 0 });
+    expect(trimmed.length).toBeGreaterThan(rate * 0.9);
+    expect(trimmed.length).toBeLessThan(rate * 1.1);
+  });
+
+  it('returns an empty array for a silent clip', () => {
+    expect(trimSilence(new Float32Array(rate), rate).length).toBe(0);
+  });
+
+  it('keeps a clip that is loud from the first sample', () => {
+    const pcm = new Float32Array(rate);
+    pcm.fill(0.3);
+    expect(trimSilence(pcm, rate, { padMs: 0 }).length).toBe(rate);
   });
 });

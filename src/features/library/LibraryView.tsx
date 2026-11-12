@@ -3,6 +3,8 @@ import { useLibraryStore, formatDuration } from './libraryStore';
 import { ConfirmDialog } from './ConfirmDialog';
 import { useAppStore } from '../../ui/appStore';
 import { exportTranscript, exportDocx, exportFullRecording } from '../../core/services/ExportService';
+import { importAudioFile } from '../../core/services/importAudio';
+import { isWhisperBetaEnabled } from '../../core/services/localWhisper';
 import { MoreVerticalIcon, SearchIcon } from '../../ui/icons';
 import { Landing } from './Landing';
 import type { Article } from '../../core/models';
@@ -26,7 +28,9 @@ export default function LibraryView() {
   const [renaming, setRenaming] = useState<Article | null>(null);
   const [renameText, setRenameText] = useState('');
   const [deleting, setDeleting] = useState<Article | null>(null);
+  const [importing, setImporting] = useState(false);
   const menuWrapRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { void refresh(); }, [refresh]);
 
@@ -39,6 +43,39 @@ export default function LibraryView() {
   const handleNew = async () => {
     const id = await createArticle();
     navigate('record', id);
+  };
+
+  const handleImportClick = () => {
+    if (!isWhisperBetaEnabled()) {
+      setStatus('[ENABLE THE LOCAL ENGINE IN SETTINGS TO IMPORT AUDIO]');
+      return;
+    }
+    fileInputRef.current?.click();
+  };
+
+  const handleImportFile = async (file: File) => {
+    setImporting(true);
+    setStatus('[DECODING AUDIO…]');
+    try {
+      const result = await importAudioFile(file, {
+        onStatus: setStatus,
+        onProgress: (fraction) => {
+          setStatus(`[TRANSCRIBING ${Math.round(fraction * 100)}%]`);
+        },
+      });
+      await refresh();
+      if (result.failedClips > 0) {
+        setStatus(`[IMPORTED WITH ${result.failedClips} FAILED CLIP${result.failedClips === 1 ? '' : 'S'}]`);
+      } else {
+        setStatus(`[IMPORTED ${result.clipCount} CLIP${result.clipCount === 1 ? '' : 'S'}]`);
+      }
+      navigate('editor', result.articleId);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'IMPORT FAILED';
+      setStatus(`[ERROR: ${message}]`);
+    } finally {
+      setImporting(false);
+    }
   };
 
   useEffect(() => {
@@ -72,9 +109,25 @@ export default function LibraryView() {
       {articles.length > 0 && (
         <div className="view-header">
           <h1>Recordings</h1>
-          <button className="primary" onClick={() => void handleNew()}>New recording</button>
+          <div className="view-actions">
+            <button onClick={handleImportClick} disabled={importing}>Import audio</button>
+            <button className="primary" onClick={() => void handleNew()}>New recording</button>
+          </div>
         </div>
       )}
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="audio/*"
+        className="visually-hidden"
+        aria-label="Import an audio file"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          e.target.value = '';
+          if (file) void handleImportFile(file);
+        }}
+      />
 
       {status && (
         <p className={`status-line${status.startsWith('[ERROR') ? ' error' : ''}`} role={status.startsWith('[ERROR') ? 'alert' : undefined}>
@@ -99,7 +152,7 @@ export default function LibraryView() {
       {!loaded ? (
         <p className="label" aria-busy="true" aria-live="polite">[LOADING RECORDINGS…]</p>
       ) : articles.length === 0 ? (
-        <Landing onStart={() => void handleNew()} />
+        <Landing onStart={() => void handleNew()} onImport={handleImportClick} />
       ) : visible.length === 0 ? (
         <p className="status-line" role="status">[NO MATCHES — CLEAR THE SEARCH FIELD]</p>
       ) : (

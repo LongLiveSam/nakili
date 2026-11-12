@@ -544,6 +544,10 @@ dialog[open] { animation: dialog-in var(--speed) ease-out; }
   font-size: clamp(1.125rem, 2vw, 1.5rem);
   line-height: 1.2;
 }
+.view-actions {
+  display: flex; flex-wrap: wrap; align-items: center;
+  gap: var(--space-sm);
+}
 
 .editor-layout {
   display: flex;
@@ -695,6 +699,10 @@ dialog[open] { animation: dialog-in var(--speed) ease-out; }
   padding: var(--space-sm) 0 var(--space-md);
 }
 .hero-copy { min-width: 0; }
+.hero-actions {
+  display: flex; flex-wrap: wrap; align-items: center;
+  gap: var(--space-sm);
+}
 .hero-dots {
   width: 120px; height: 24px; margin-bottom: var(--space-md);
   background-image: radial-gradient(circle, var(--border-visible) 1.5px, transparent 1.5px);
