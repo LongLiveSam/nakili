@@ -4,6 +4,10 @@ Nakili uses decimal minor steps: `0.01`, `0.02` … `0.09`, `0.1` … `0.5`, `1.
 `npm run release -- bump` moves one step; `npm run release -- set 0.5` jumps.
 Every release is a git tag (`v0.01`, `v0.5`, `v1.0`).
 
+## v0.06 — 2026-11-12
+
+- Taste pass: one aligned shell container, 7:1 light-mode secondary text, hidden import input out of the tab order, tighter landing rhythm, a reduced-motion-safe hero entrance, and a 1200x630 social card.
+
 ## v0.05 — 2026-11-12
 
 - Broadcast Desk: a new visual world with warm studio light and dark modes, a signal-red tally, a serif transcript, a cue-sheet clip stack, icons on Download and Rename, and a system-default color mode. PRODUCT.md and DESIGN.md added; the Nothing design language is retired.
