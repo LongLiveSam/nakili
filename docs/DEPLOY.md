@@ -5,14 +5,26 @@ database to provision — hosting is just HTTPS + those files.
 
 ## Current state
 
-A production build is running locally:
+Two instances are live right now:
 
-```
-http://127.0.0.1:4173
+| Instance | URL | Lifetime |
+|---|---|---|
+| Local production build | `http://127.0.0.1:4173` | while the server process runs |
+| Public HTTPS quick tunnel | `https://icons-chemical-diana-cst.trycloudflare.com` | while the `cloudflared` process runs |
+
+The public URL is a **temporary Cloudflare quick tunnel** — no account, no
+durable host, and the URL changes every time it restarts. It exists so the app
+can be tried on a phone or another machine immediately. For a permanent URL,
+use one of the hosts below.
+
+`scripts/live.sh` rebuilds, serves `dist/` locally and starts a fresh quick
+tunnel in one step:
+
+```bash
+./scripts/live.sh
 ```
 
-`dist/` is served with `python3 -m http.server 4173 --directory dist`. Rebuild
-and restart after changes:
+Without a tunnel:
 
 ```bash
 npm run build
@@ -23,8 +35,8 @@ python3 -m http.server 4173 --directory dist
 work there. Opening the same build over a plain-HTTP LAN address does **not**
 work — browsers block `getUserMedia` outside HTTPS/localhost.
 
-A public URL requires an account or credentials that are not on this machine
-(see [What is still missing](#what-is-still-missing)).
+A durable public URL requires an account or credentials that are not on this
+machine (see [What is still missing](#what-is-still-missing)).
 
 ## GitHub Pages (workflow included)
 
@@ -103,4 +115,6 @@ Going public needs **one** of the following, supplied by the account owner:
 - A Netlify, Vercel or Cloudflare account token / interactive login.
 - A domain, if it should not live on the provider's subdomain.
 
-Until one exists, the local server above is the live instance.
+Until one exists, the local server and temporary tunnel above are the live
+instances. Neither is durable: the tunnel URL changes when the process
+restarts, and the local build only exists on this machine.
