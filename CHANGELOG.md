@@ -4,6 +4,10 @@ Nakili uses decimal minor steps: `0.01`, `0.02` … `0.09`, `0.1` … `0.5`, `1.
 `npm run release -- bump` moves one step; `npm run release -- set 0.5` jumps.
 Every release is a git tag (`v0.01`, `v0.5`, `v1.0`).
 
+## v0.08 — 2026-11-12
+
+- Removed the landing preview card and replaced the square-thumb toggle with a standard teal switch. The welcome page is now a single-column hero; the social card was regenerated.
+
 ## v0.07 — 2026-11-12
 
 - Welcome home: the landing page is now the permanent Home, with Recordings as its own view. Brand teal #2aa2a4 replaces the orange accents. The last Nothing signatures are gone: the dot pattern, bracketed status text and bracketed close buttons.
