@@ -11,6 +11,8 @@ import { PlayHighlightOverlay } from './PlayHighlightOverlay';
 import { TutorialOverlay } from '../../ui/TutorialOverlay';
 import { ArrowLeftIcon } from '../../ui/icons';
 import { findFillers, smartTypography } from '../../core/services/formatting';
+import { runUserScript } from '../../core/services/userScript';
+import { loadTransformScript } from '../../core/services/pipelineSettings';
 
 import { transcribeClipLocally, isWhisperBetaEnabled } from '../../core/services/localWhisper';
 
@@ -50,6 +52,7 @@ export default function EditorView() {
   const [panelOpen, setPanelOpen] = useState(false);
   const [fontSize, setFontSize] = useState(loadFontSize);
   const [reading, setReading] = useState(false);
+  const [scriptStatus, setScriptStatus] = useState<string | null>(null);
   const [sweep, setSweep] = useState<{ ranges: Array<{ start: number; end: number }>; i: number } | null>(null);
   const whisperBeta = isWhisperBetaEnabled();
   const [tutorialOpen, setTutorialOpen] = useState(() => {
@@ -220,8 +223,23 @@ export default function EditorView() {
     selectRange(vocabRanges[i].start, vocabRanges[i].end);
   };
 
-  const toggleReading = () => {
-    if (!('speechSynthesis' in window)) return;
+  const runScript = async () => {
+    const script = loadTransformScript();
+    if (!script.trim()) {
+      setScriptStatus('[NO SCRIPT — SET ONE IN SETTINGS]');
+      return;
+    }
+    setScriptStatus('[RUNNING…]');
+    const result = await runUserScript(text, script);
+    if (!result.ok) {
+      setScriptStatus(`[ERROR: ${result.error.toUpperCase()}]`);
+      return;
+    }
+    setText(result.text);
+    setScriptStatus(result.text === text ? '[SCRIPT RAN — NO CHANGES]' : '[SCRIPT APPLIED]');
+  };
+
+  const toggleReading = () => {    if (!('speechSynthesis' in window)) return;
     if (reading) {
       speechSynthesis.cancel();
       setReading(false);
@@ -298,6 +316,7 @@ export default function EditorView() {
           </div>
           <div style={{ display: 'flex', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
             <button onClick={() => setText(smartTypography(text))}>Smart typography</button>
+            <button onClick={() => void runScript()}>Run script</button>
             <button aria-pressed={reading} onClick={toggleReading}>
               {reading ? '[Reading… stop]' : 'Read aloud'}
             </button>
@@ -305,6 +324,14 @@ export default function EditorView() {
               <button onClick={() => void fixFlaggedClips()}>
                 Fix flagged clips ({flaggedIndexes.length})
               </button>
+            )}
+            {scriptStatus && (
+              <span
+                role="status"
+                className={scriptStatus.startsWith('[ERROR') ? 'status-line error' : 'status-line'}
+              >
+                {scriptStatus}
+              </span>
             )}
             {batchStatus && <span className="status-line">{batchStatus}</span>}
           </div>

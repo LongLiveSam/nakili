@@ -5,7 +5,9 @@ import {
   buildTranscript, type FinalResult,
 } from '../../core/services/MappingService';
 import { adjustSegmentsAfterEdit } from '../../core/services/MappingService';
-import { applyVoiceCommands, planParagraphBreaks } from '../../core/services/formatting';
+import { planParagraphBreaks } from '../../core/services/formatting';
+import { runPipeline } from '../../core/services/pipeline';
+import { loadVocabularyTerms, readPipelineOptions } from '../../core/services/pipelineSettings';
 import {
   saveSessionAudio, putArticle, getArticle, putSegments, getChunks,
 } from '../../core/db/repositories';
@@ -51,15 +53,7 @@ export function getActiveAnalyser(): AnalyserNode | null {
 }
 
 function loadVocabulary(): string[] {
-  try {
-    return localStorage
-      .getItem('nakili-vocab')
-      ?.split('\n')
-      .map((w) => w.trim())
-      .filter(Boolean) ?? [];
-  } catch {
-    return [];
-  }
+  return loadVocabularyTerms();
 }
 
 function makeServices(): void {
@@ -168,11 +162,11 @@ export const useRecordingStore = create<RecordingState>((set, get) => ({
       return;
     }
     speech!.onInterim = (t) => set({ interimText: t });
-    const voiceCmds = featureOn('nakili-voice-cmds');
+    const pipeline = readPipelineOptions();
     const tb = () => appendBase?.timeBase ?? 0;
     speech!.onFinal = (rawText, elapsedSec) =>
       set((s) => {
-        const text = voiceCmds ? applyVoiceCommands(rawText).text : rawText;
+        const text = runPipeline(rawText, pipeline).text;
         if (!text) return { interimText: '' } as Partial<RecordingState>;
         const abs = elapsedSec + tb();
         const last = s.finals[s.finals.length - 1];

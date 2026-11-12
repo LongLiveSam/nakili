@@ -2,6 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { exportAllBackup } from '../core/services/ExportService';
 import { storageUsage } from '../core/db/repositories';
 import { db } from '../core/db/db';
+import {
+  PIPELINE_KEYS, loadTransformScript, readVocabularyThreshold,
+} from '../core/services/pipelineSettings';
 import { Toggle } from './Toggle';
 
 interface Props {
@@ -40,6 +43,8 @@ export function SettingsDialog({ open, onClose }: Props) {
   const [lang, setLang] = useState(loadStored('nakili-lang', 'en-US'));
   const [micId, setMicId] = useState(loadStored('nakili-mic'));
   const [fontSize, setFontSize] = useState(loadStored('nakili-fontsize', '18'));
+  const [threshold, setThreshold] = useState(String(readVocabularyThreshold()));
+  const [script, setScript] = useState(loadTransformScript());
   const [mics, setMics] = useState<MediaDeviceInfo[]>([]);
   const [usage, setUsage] = useState<{ usage: number; quota: number } | null>(null);
   const [clearArmed, setClearArmed] = useState(false);
@@ -54,6 +59,8 @@ export function SettingsDialog({ open, onClose }: Props) {
       setLang(loadStored('nakili-lang', 'en-US'));
       setMicId(loadStored('nakili-mic'));
       setFontSize(loadStored('nakili-fontsize', '18'));
+      setThreshold(String(readVocabularyThreshold()));
+      setScript(loadTransformScript());
       setSaved(false);
       setBackupStatus(null);
       setClearArmed(false);
@@ -70,6 +77,7 @@ export function SettingsDialog({ open, onClose }: Props) {
   const save = () => {
     saveStored('nakili-vocab', text);
     saveStored('nakili-lang', lang);
+    saveStored(PIPELINE_KEYS.script, script);
     if (micId) saveStored('nakili-mic', micId);
     else saveStored('nakili-mic', '');
     setSaved(true);
@@ -180,6 +188,44 @@ export function SettingsDialog({ open, onClose }: Props) {
         defaultOn
       />
       <Toggle label="Auto-paragraph on silence" storageKey="nakili-autopara" defaultOn />
+      <Toggle
+        label="Auto-correct to vocabulary"
+        storageKey={PIPELINE_KEYS.vocabulary}
+        defaultOn
+      />
+      <Toggle
+        label="Remove filler words (um, uh)"
+        storageKey={PIPELINE_KEYS.fillers}
+        defaultOn={false}
+      />
+      <Toggle
+        label="Smart typography while dictating"
+        storageKey={PIPELINE_KEYS.typography}
+        defaultOn={false}
+      />
+      <label className="label" htmlFor="vocab-threshold">Vocabulary strictness</label>
+      <select
+        id="vocab-threshold"
+        value={threshold}
+        onChange={(e) => {
+          setThreshold(e.target.value);
+          saveStored(PIPELINE_KEYS.threshold, e.target.value);
+        }}
+        style={{
+          font: 'inherit',
+          background: 'var(--surface)',
+          color: 'var(--text-primary)',
+          border: '1px solid var(--border-visible)',
+          borderRadius: 8,
+          minHeight: 44,
+          padding: '0 12px',
+          width: '100%',
+        }}
+      >
+        <option value="0.12">Strict — only close spellings</option>
+        <option value="0.18">Balanced — recommended</option>
+        <option value="0.3">Loose — catch heavier mishearings</option>
+      </select>
 
       <h3>Playback</h3>
       <Toggle label="Auto-play next clip" storageKey="nakili-autonext" defaultOn={false} />
@@ -212,6 +258,22 @@ export function SettingsDialog({ open, onClose }: Props) {
         <option value="18">Medium</option>
         <option value="20">Large</option>
       </select>
+
+      <label className="label" htmlFor="transform-script">Transform script (JavaScript)</label>
+      <p style={{ color: 'var(--text-disabled)', fontSize: 12 }}>
+        Receives the transcript as <code>text</code>; return the text to keep.
+        Runs in a throwaway worker with a 30 s limit — on error or timeout the
+        original text survives. Applies only when you press “Run script” in the editor.
+      </p>
+      <textarea
+        id="transform-script"
+        value={script}
+        onChange={(e) => { setScript(e.target.value); setSaved(false); }}
+        rows={6}
+        spellCheck={false}
+        style={{ width: '100%', minHeight: 120, fontFamily: 'var(--font-mono)', fontSize: 13 }}
+        placeholder={'// one sentence per line\nreturn text.split(/(?<=[.!?])\\s+/).join("\\n");'}
+      />
 
       <h3>Data safety</h3>
       <p>

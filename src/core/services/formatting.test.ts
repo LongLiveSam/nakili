@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { applyVoiceCommands, planParagraphBreaks, findFillers, smartTypography } from './formatting';
+import { applyVoiceCommands, planParagraphBreaks, findFillers, removeFillers, smartTypography } from './formatting';
 
 describe('applyVoiceCommands', () => {
   it('replaces paragraph and line commands', () => {
@@ -73,5 +73,29 @@ describe('smartTypography', () => {
   it('curls quotes by position', () => {
     const out = smartTypography('he said "hi"');
     expect(out).toContain('\u201Chi\u201D');
+  });
+});
+
+describe('removeFillers', () => {
+  it('removes unambiguous fillers and reports the count', () => {
+    const r = removeFillers('hello um world uh');
+    expect(r.removed).toBe(2);
+    expect(r.text).toBe('hello world');
+  });
+
+  it('keeps the sentence cap when a filler opens the text', () => {
+    const r = removeFillers('Um, this is fine');
+    expect(r.text).toBe('This is fine');
+  });
+
+  it('leaves ambiguous words like "like" and "kinda" alone', () => {
+    const r = removeFillers('it was kinda like a dream');
+    expect(r.text).toBe('it was kinda like a dream');
+    expect(r.removed).toBe(0);
+  });
+
+  it('does not collapse paragraph breaks', () => {
+    const r = removeFillers('one\n\num two');
+    expect(r.text).toBe('one\n\nTwo');
   });
 });

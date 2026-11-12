@@ -105,3 +105,40 @@ export function smartTypography(text: string): string {
     .replace(/(^|[\s([{])'/g, '$1\u2018')
     .replace(/'/g, '\u2019');
 }
+
+/**
+ * Sweep unambiguous filler words ('um', 'uh', 'erm', 'hmm', 'you know').
+ * Splicing happens right-to-left so earlier offsets stay valid; whitespace and
+ * paragraph breaks are preserved, and a filler that opened the text does not
+ * leave the next sentence in lower case.
+ */
+export function removeFillers(text: string): { text: string; removed: number } {
+  const hits = findFillers(text);
+  if (hits.length === 0) return { text, removed: 0 };
+  let out = text;
+  // Right-to-left keeps every earlier offset valid. Only a filler that opened a
+  // sentence hands its capital to the following word.
+  for (let i = hits.length - 1; i >= 0; i--) {
+    const hit = hits[i];
+    const opensSentence = /(^|\n)[ \t]*$/.test(text.slice(0, hit.start));
+    out = out.slice(0, hit.start) + out.slice(hit.start + hit.word.length);
+    if (opensSentence) out = capitalizeAt(out, hit.start);
+  }
+  out = out
+    .replace(/[ \t]{2,}/g, ' ')
+    .replace(/^[ \t]+/, '')
+    .replace(/[ \t]+(?=\n)/g, '')
+    .replace(/\n[ \t]+/g, '\n')
+    .replace(/[ \t]+$/, '');
+  return { text: out, removed: hits.length };
+}
+
+function capitalizeAt(text: string, index: number): string {
+  for (let i = index; i < text.length; i++) {
+    const ch = text[i];
+    if (ch === ' ' || ch === '\t') continue;
+    if (ch >= 'a' && ch <= 'z') return text.slice(0, i) + ch.toUpperCase() + text.slice(i + 1);
+    return text;
+  }
+  return text;
+}
