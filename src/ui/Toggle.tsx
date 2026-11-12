@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 
 /**
- * Broadcast Desk toggle: pill track, square-ended thumb.
+ * Broadcast Desk switch: a standard track-and-thumb toggle.
  * Instant-save semantics — writes the backing key on change.
  */
 export function Toggle({
@@ -28,12 +28,14 @@ export function Toggle({
   }, [on]);
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, minHeight: 44 }}>
+    <div className="toggle-row">
       <span className="label">{label}</span>
       <button
+        type="button"
         role="switch"
         aria-checked={on}
         aria-label={label}
+        className={`toggle${on ? ' on' : ''}`}
         onClick={() => {
           const next = !on;
           setOn(next);
@@ -43,29 +45,10 @@ export function Toggle({
             /* ignore */
           }
         }}
-        style={{
-          width: 56,
-          minWidth: 56,
-          padding: 2,
-          height: 28,
-          minHeight: 28,
-          borderRadius: 999,
-          borderColor: on ? 'var(--text-display)' : 'var(--border-visible)',
-          background: on ? 'var(--text-display)' : 'transparent',
-        }}
       >
-        <span
-          aria-hidden="true"
-          style={{
-            display: 'block',
-            width: 22,
-            height: 22,
-            borderRadius: 2,
-            marginLeft: on ? 'auto' : 0,
-            background: on ? 'var(--bg)' : 'var(--text-disabled)',
-            transition: 'margin-left var(--speed)',
-          }}
-        />
+        <span className="toggle-track" aria-hidden="true">
+          <span className="toggle-thumb" />
+        </span>
       </button>
     </div>
   );

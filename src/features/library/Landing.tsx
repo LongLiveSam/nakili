@@ -50,21 +50,6 @@ export function Landing({
             </p>
           )}
         </div>
-
-        <div className="hero-preview" aria-hidden="true">
-          <div className="preview-bar">
-            <span className="label">Recording</span>
-            <span className="preview-time">0:42</span>
-          </div>
-          <p className="preview-text">
-            Quiet software does not compete for attention.
-          </p>
-          <div className="preview-clips">
-            <span className="preview-clip on"><span>Clip 1</span><span>0:00–0:30</span></span>
-            <span className="preview-clip"><span>Clip 2</span><span>0:30–1:00</span></span>
-            <span className="preview-clip"><span>Clip 3</span><span>1:00–1:30</span></span>
-          </div>
-        </div>
       </section>
 
       <section aria-label="How it works" className="landing-section">
