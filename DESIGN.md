@@ -157,14 +157,15 @@ seek strip, where the active clip is a red-tinted tally.
 - **Amber** `#d9a441` — a secondary signal for warnings and the recording
   timer, used sparingly.
 - **Ink** `#f2ece1` dark / `#171a16` light — body and display text.
-- **Muted** `#a89f90` dark / `#565c52` light — metadata, labels, secondary copy.
+- **Muted** `#a89f90` dark / `#4c4e4a` light — metadata, labels, secondary copy.
 - **Rule** `#332e28` dark / `#d1d5cc` light — hairlines and borders.
 
 ## Typography
 
 - **Display / wordmark:** Archivo Narrow, uppercase, 700, tight leading. Used
-  for the NAKILI wordmark and the landing headline.
-- **Headline:** Source Serif 4, 600. Used for page titles and the editor title.
+  for the NAKILI header wordmark.
+- **Headline:** Source Serif 4, 600. Used for the landing hero, section
+  headings, page titles and the editor title.
 - **Body / transcript:** Source Serif 4, 400, 1.6 leading. The transcript is the
   reading surface; it is set at 1.25rem and can be enlarged in Settings.
 - **Label:** IBM Plex Mono, uppercase, 0.12em tracking. Used for `CUE SHEET`,
@@ -178,8 +179,9 @@ seek strip, where the active clip is a red-tinted tally.
 - The editor is a two-column split: a flexible transcript column and a 300px
   cue sheet. Below 900px the cue sheet becomes a bottom sheet.
 - Spacing follows an 8px base: 4, 8, 16, 24, 32, 48, 64.
-- The landing uses a two-column hero (copy and a product preview) that stacks
-  below 860px.
+- The landing uses a two-column hero (headline and a quiet note) that stacks
+  below 860px; sections use large serif headings, numbered steps, a two-column
+  feature grid, and a quiet closing line.
 
 ## Elevation & Depth
 

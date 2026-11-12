@@ -28,10 +28,10 @@ describe('app shell', () => {
   it('shows the landing page on first visit', async () => {
     render(<App />);
     expect(
-      await screen.findByRole('heading', { name: /nakili/i }),
+      await screen.findByRole('heading', { name: /dictation desk for long-form writing/i }),
     ).toBeInTheDocument();
-    expect(screen.getByText(/edit the words in place/i)).toBeInTheDocument();
-    expect(screen.getByText('Transcript')).toBeInTheDocument();
+    expect(screen.getByText(/built for african languages/i)).toBeInTheDocument();
+    expect(screen.getByText('Speak')).toBeInTheDocument();
   });
 
   it('shows site header with brand, Recordings link and Help', () => {
@@ -79,7 +79,7 @@ describe('app shell', () => {
 
   it('navigates to record view from the landing CTA', async () => {
     render(<App />);
-    const ctas = await screen.findAllByRole('button', { name: /start dictating/i });
+    const ctas = await screen.findAllByRole('button', { name: /start a recording/i });
     await userEvent.click(ctas[0]);
     await waitFor(() => expect(useAppStore.getState().view).toBe('record'));
     expect(useAppStore.getState().activeArticleId).toBeTruthy();
