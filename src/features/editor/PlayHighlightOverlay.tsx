@@ -8,6 +8,8 @@ interface Props {
   taRef: React.RefObject<HTMLTextAreaElement | null>;
   text: string;
   segments: TranscriptSegment[];
+  /** Clip boundaries, so time inside a clip can be placed on the transcript timeline. */
+  chunks: Array<{ index: number; startTimeSec: number }>;
   fontSize: number;
 }
 
@@ -16,11 +18,17 @@ interface Props {
  * spoken while a clip plays. The textarea background is transparent inside
  * .ta-wrap so the highlight shows through; typography must match exactly.
  */
-export function PlayHighlightOverlay({ taRef, text, segments, fontSize }: Props) {
+export function PlayHighlightOverlay({ taRef, text, segments, chunks, fontSize }: Props) {
   const mirrorRef = useRef<HTMLDivElement>(null);
-  const t = usePlaybackStore((s) => s.currentTimeSec);
+  const currentTimeSec = usePlaybackStore((s) => s.currentTimeSec);
   const playingIndex = usePlaybackStore((s) => s.playingIndex);
   const active = playingIndex !== null;
+  // Audio time is relative to the clip; segment times are absolute.
+  const chunkStartSec =
+    playingIndex === null
+      ? 0
+      : (chunks.find((chunk) => chunk.index === playingIndex)?.startTimeSec ?? 0);
+  const t = chunkStartSec + currentTimeSec;
 
   // Keep the mirror scrolled in lock-step with the textarea while playing.
   useEffect(() => {

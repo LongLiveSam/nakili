@@ -342,6 +342,7 @@ export default function EditorView() {
                 taRef={taRef}
                 text={article.transcriptText}
                 segments={useEditorStore.getState().segments}
+                chunks={chunks}
                 fontSize={fontSize}
               />
             )}
