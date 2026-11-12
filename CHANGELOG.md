@@ -4,6 +4,10 @@ Nakili uses decimal minor steps: `0.01`, `0.02` … `0.09`, `0.1` … `0.5`, `1.
 `npm run release -- bump` moves one step; `npm run release -- set 0.5` jumps.
 Every release is a git tag (`v0.01`, `v0.5`, `v1.0`).
 
+## v0.02 — 2026-11-12
+
+- Pause-aligned clip chunking: pausing closes the current clip and resuming starts a new one at the recorded offset, so clip offsets and transcript timestamps no longer drift. Paused time is excluded from speech timestamps and stored clip starts are real.
+
 ## v0.01 — 2026-11-12
 
 - First versioned release: local-first dictation PWA with live transcription,
