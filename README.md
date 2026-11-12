@@ -15,12 +15,16 @@ npm run build    # production build to dist/
 
 Requires **Chrome or Edge** (uses the Web Speech API).
 
+Deployment options and the local production server are documented in
+[docs/DEPLOY.md](docs/DEPLOY.md).
+
 ## Using it
 
 - **New recording** → speak → **Stop** saves transcript + audio.
 - Click anywhere in a transcript; the matching 30 s clip highlights in the
   Clips panel for instant playback ("~" = approximate match after edits).
-- Export via **Share** (editor) or the ⋮ menu: `.txt` transcript / `.webm` audio.
+- Export from the editor or the ⋮ menu: `.txt` transcript / `.webm` audio.
+  Exports always download; nothing is shared through the Web Share API.
 
 ## Privacy
 
@@ -37,7 +41,6 @@ segmented progress bars, inline `[STATUS]` text instead of toasts.
 
 ## Roadmap (deferred by decision)
 
-- Voice-activity auto-pause during long silences.
 - Manual audio-only recording mode for browsers without Web Speech API.
 - Opt-in cloud re-transcription ("enhance accuracy") using a user-supplied
   API key — intentionally not built to keep the app fully free and private.

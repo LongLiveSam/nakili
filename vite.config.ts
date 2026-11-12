@@ -4,6 +4,9 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
 export default defineConfig({
+  // Root-hosted by default. GitHub Pages project sites build with
+  // VITE_BASE=/<repo>/ so assets, the service worker and the manifest resolve.
+  base: process.env.VITE_BASE || '/',
   plugins: [react()],
   test: {
     environment: 'jsdom',

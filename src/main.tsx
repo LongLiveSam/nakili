@@ -17,6 +17,7 @@ createRoot(document.getElementById('root')!).render(
 );
 
 // PWA: offline app shell (production only — keeps HMR clean in dev).
+// BASE_URL keeps the worker inside a GitHub Pages project subpath.
 if (import.meta.env.PROD && 'serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js').catch(() => {});
+  navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`).catch(() => {});
 }

@@ -1,9 +1,13 @@
 /* Nakili service worker — app-shell caching, runtime asset cache.
- * IndexedDB content is already local; never cached here. */
-const CACHE = 'nakili-v1';
+ * IndexedDB content is already local; never cached here.
+ *
+ * All paths are resolved from this worker's own location so the same file
+ * works at the root or under a GitHub Pages project subpath. */
+const CACHE = 'nakili-v2';
+const SHELL = new URL('./', self.location.href).href;
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE).then((c) => c.add('/')).then(() => self.skipWaiting()));
+  event.waitUntil(caches.open(CACHE).then((c) => c.add(SHELL)).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', (event) => {
@@ -25,10 +29,10 @@ self.addEventListener('fetch', (event) => {
       fetch(event.request)
         .then((res) => {
           const copy = res.clone();
-          caches.open(CACHE).then((c) => c.put('/', copy));
+          caches.open(CACHE).then((c) => c.put(SHELL, copy));
           return res;
         })
-        .catch(() => caches.match('/')),
+        .catch(() => caches.match(SHELL)),
     );
     return;
   }
