@@ -5,17 +5,18 @@ database to provision — hosting is just HTTPS + those files.
 
 ## Current state
 
-Two instances are live right now:
+Three instances are live:
 
 | Instance | URL | Lifetime |
 |---|---|---|
+| **Public (durable)** | `https://longlivesam.github.io/nakili/` | permanent, deployed by GitHub Actions |
 | Local production build | `http://127.0.0.1:4173` | while the server process runs |
 | Public HTTPS quick tunnel | `https://icons-chemical-diana-cst.trycloudflare.com` | while the `cloudflared` process runs |
 
-The public URL is a **temporary Cloudflare quick tunnel** — no account, no
-durable host, and the URL changes every time it restarts. It exists so the app
-can be tried on a phone or another machine immediately. For a permanent URL,
-use one of the hosts below.
+The GitHub Pages site is the canonical URL. Every push to `main` runs the
+tests, builds with the `/nakili/` base path and publishes. The quick tunnel is
+only a scratch instance for trying uncommitted builds on a phone; its URL
+changes whenever it restarts.
 
 `scripts/live.sh` rebuilds, serves `dist/` locally and starts a fresh quick
 tunnel in one step:
@@ -38,30 +39,36 @@ work — browsers block `getUserMedia` outside HTTPS/localhost.
 A durable public URL requires an account or credentials that are not on this
 machine (see [What is still missing](#what-is-still-missing)).
 
-## GitHub Pages (workflow included)
+## GitHub Pages (live)
 
 `.github/workflows/deploy-pages.yml` runs the tests, builds with the correct
 subpath, and publishes on every push to `main`.
 
-One-time setup:
+The repository is `LongLiveSam/nakili`; Pages is enabled with
+**Source: GitHub Actions**, so the site is at:
 
-1. Create an empty repository on GitHub (no README, no license).
-2. Point the local repo at it and push:
+```
+https://longlivesam.github.io/nakili/
+```
 
-   ```bash
-   git remote set-url origin git@github.com:<you>/<repo>.git
-   git push -u origin main
-   ```
-
-3. Repository → **Settings → Pages → Build and deployment → Source**:
-   choose **GitHub Actions**.
-
-The app is then at `https://<you>.github.io/<repo>/`. The workflow detects the
-`<you>.github.io` user-site case and builds for the domain root instead.
+The workflow detects the `<you>.github.io` user-site case and builds for the
+domain root instead.
 
 `vite.config.ts` reads `VITE_BASE`; the workflow passes `/<repo>/`
 automatically, and `index.html`, the service worker and the manifest all honour
 it.
+
+To deploy a change:
+
+```bash
+git push github main
+```
+
+To watch the run:
+
+```bash
+gh run watch
+```
 
 ## Netlify
 
@@ -106,15 +113,13 @@ Create a Pages project, connect the repository, and use:
 - If the site is on a subpath, confirm `/favicon.svg`, the manifest and
   `/assets/*` all return 200 (not 404 under the site root).
 
-## What is still missing
+## Custom domain (optional)
 
-Going public needs **one** of the following, supplied by the account owner:
+The site is live on the provider subdomain. To use your own domain:
 
-- A GitHub repository URL plus push access (SSH key or `gh auth login`), for
-  the Pages workflow.
-- A Netlify, Vercel or Cloudflare account token / interactive login.
-- A domain, if it should not live on the provider's subdomain.
+1. Repository → **Settings → Pages → Custom domain**, enter the domain.
+2. Add a `CNAME` DNS record pointing at `longlivesam.github.io` (or the apex
+   records GitHub prints).
+3. Tick **Enforce HTTPS** once the certificate is issued.
 
-Until one exists, the local server and temporary tunnel above are the live
-instances. Neither is durable: the tunnel URL changes when the process
-restarts, and the local build only exists on this machine.
+No code change is needed; the workflow keeps publishing to the same Pages site.

@@ -4,6 +4,8 @@ Private, local-first dictation for long-form writing. Speak, watch words appear
 in real time, edit the transcript like a document — with the original audio
 always one click away as 30-second clips mapped to your text.
 
+**Live:** https://longlivesam.github.io/nakili/
+
 ## Run it
 
 ```powershell
