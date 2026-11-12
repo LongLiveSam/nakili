@@ -41,7 +41,7 @@ machine (see [What is still missing](#what-is-still-missing)).
 ## GitHub Pages (workflow included)
 
 `.github/workflows/deploy-pages.yml` runs the tests, builds with the correct
-subpath, and publishes on every push to `master`.
+subpath, and publishes on every push to `main`.
 
 One-time setup:
 
@@ -50,7 +50,7 @@ One-time setup:
 
    ```bash
    git remote set-url origin git@github.com:<you>/<repo>.git
-   git push -u origin master
+   git push -u origin main
    ```
 
 3. Repository → **Settings → Pages → Build and deployment → Source**:
