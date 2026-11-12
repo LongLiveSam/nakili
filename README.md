@@ -87,7 +87,7 @@ Deployment options are documented in [docs/DEPLOY.md](docs/DEPLOY.md).
 
 ## Design
 
-Nothing design language: monochrome, typographic, industrial — Doto / Space
+Nothing design language: monochrome, typographic, industrial - Doto / Space
 Grotesk / Space Mono, OLED-dark and paper-light themes, segmented progress
 bars, inline `[STATUS]` text instead of toasts.
 
@@ -97,7 +97,7 @@ bars, inline `[STATUS]` text instead of toasts.
   supports.
 - Manual audio-only recording for browsers without the Web Speech API.
 - Opt-in cloud re-transcription (“enhance accuracy”) with a user-supplied API
-  key — intentionally not built, to keep the app free and private.
+  key - intentionally not built, to keep the app free and private.
 
 ## License
 
