@@ -5,6 +5,7 @@ import { db } from '../core/db/db';
 import {
   PIPELINE_KEYS, loadTransformScript, readVocabularyThreshold,
 } from '../core/services/pipelineSettings';
+import { getLastSalvageReport } from '../core/services/settingsMigration';
 import { Toggle } from './Toggle';
 
 interface Props {
@@ -280,6 +281,11 @@ export function SettingsDialog({ open, onClose }: Props) {
         Recordings live only in this browser and can be evicted under storage pressure.
         Download a full backup (JSON + audio) regularly.
       </p>
+      {getLastSalvageReport().issues.length > 0 && (
+        <p role="status" className="status-line">
+          [SETTINGS REPAIRED: {getLastSalvageReport().issues.length}]
+        </p>
+      )}
       <button onClick={() => void runBackup()}>Export all data</button>
       {backupStatus && (
         <span className={backupStatus.startsWith('[ERROR') ? 'status-line error' : 'status-line'}

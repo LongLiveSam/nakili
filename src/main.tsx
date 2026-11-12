@@ -2,9 +2,12 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import './styles/global.css';
 import { initTheme } from './ui/theme';
+import { salvageSettings } from './core/services/settingsMigration';
 import App from './App';
 
-// Restore skin + mode before first paint (defaults: Paper / dark).
+// Repair drifted preference keys before anything reads them (Handy-style
+// recover-instead-of-crash), then restore skin + mode before first paint.
+salvageSettings();
 initTheme();
 
 createRoot(document.getElementById('root')!).render(
