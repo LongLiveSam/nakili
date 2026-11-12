@@ -68,7 +68,7 @@ export default function LibraryView() {
   });
 
   return (
-    <main className="view" id="main">
+    <main className={`view${loaded ? '' : ' view-boot'}`} id="main">
       {articles.length > 0 && (
         <div className="view-header">
           <h1>Recordings</h1>

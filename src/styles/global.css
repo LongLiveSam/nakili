@@ -530,6 +530,9 @@ dialog[open] { animation: dialog-in var(--speed) ease-out; }
   margin: 0 auto;
   padding: var(--space-lg) var(--space-md);
 }
+/* Boot: the library reads IndexedDB before its first paint. Reserve the screen
+ * so the footer does not jump into view and back out again (layout shift). */
+.view-boot { min-height: calc(100dvh - 56px); }
 .view-header {
   display: flex; align-items: center; justify-content: space-between;
   flex-wrap: wrap; gap: var(--space-md);

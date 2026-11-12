@@ -11,6 +11,7 @@ npm install
 npm run dev      # http://localhost:5173
 npm test         # Vitest suite
 npm run build    # production build to dist/
+./scripts/live.sh  # build, serve dist/ on :4173, open a public HTTPS tunnel
 ```
 
 Requires **Chrome or Edge** (uses the Web Speech API).
