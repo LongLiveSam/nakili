@@ -12,7 +12,7 @@ interface Props {
 
 /**
  * Confirmation dialog with full dismissal patterns:
- * Esc (native), backdrop click, [ X ] ghost close, Enter submits,
+ * Esc (native), backdrop click, × ghost close, Enter submits,
  * and the browser back button cancels instead of leaving the page.
  */
 export function ConfirmDialog({ open, title, children, confirmLabel, danger, onConfirm, onCancel }: Props) {
@@ -78,7 +78,7 @@ export function ConfirmDialog({ open, title, children, confirmLabel, danger, onC
         aria-label="Close"
         onClick={onCancel}
       >
-        [ X ]
+        ×
       </button>
       <form onSubmit={(e) => { e.preventDefault(); onConfirm(); }}>
         <h2 style={{ marginRight: 48 }}>{title}</h2>

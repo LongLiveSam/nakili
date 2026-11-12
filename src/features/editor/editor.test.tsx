@@ -101,7 +101,7 @@ describe('editor', () => {
       await vi.advanceTimersByTimeAsync(600);
       expect(useEditorStore.getState().saved).toBe(false);
       expect(useEditorStore.getState().saveError).toBe(true);
-      expect(screen.getByText('[AUTOSAVE FAILED — WILL RETRY]')).toBeInTheDocument();
+      expect(screen.getByText('Autosave failed — will retry')).toBeInTheDocument();
     } finally {
       putSpy.mockRestore();
       vi.useRealTimers();

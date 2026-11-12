@@ -94,7 +94,7 @@ function ensureAudio(): HTMLAudioElement {
       : 'UNKNOWN';
     // Inline status — no toasts in the Broadcast Desk system.
     release();
-    usePlaybackStore.setState({ playingIndex: null, error: `[PLAYBACK ERROR: ${detail.toUpperCase()}]` });
+    usePlaybackStore.setState({ playingIndex: null, error: `Playback error: ${detail}` });
   });
   return audioEl;
 }

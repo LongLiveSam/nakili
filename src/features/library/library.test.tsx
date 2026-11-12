@@ -47,10 +47,10 @@ describe('library', () => {
     expect(screen.getByText(/2:05/)).toBeInTheDocument();
   });
 
-  it('shows the landing without a duplicate recordings header when empty', async () => {
+  it('shows an empty state when there are no recordings', async () => {
     render(<LibraryView />);
-    expect(await screen.findByRole('heading', { name: /nakili/i })).toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: /recordings/i })).not.toBeInTheDocument();
+    expect(await screen.findByText(/no recordings yet/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /new recording/i })).toBeInTheDocument();
   });
 
   it('reports when a search has no matches', async () => {
@@ -72,8 +72,7 @@ describe('library', () => {
 
   it('creates an article and navigates to record view with its id', async () => {
     render(<LibraryView />);
-    const ctas = await screen.findAllByRole('button', { name: /start dictating/i });
-    await userEvent.click(ctas[0]);
+    await userEvent.click(await screen.findByRole('button', { name: /new recording/i }));
     await waitFor(() => expect(useAppStore.getState().view).toBe('record'));
     expect(useAppStore.getState().activeArticleId).toBeTruthy();
   });

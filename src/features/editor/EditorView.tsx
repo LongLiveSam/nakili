@@ -177,15 +177,15 @@ export default function EditorView() {
     if (!whisperBeta || flaggedIndexes.length === 0) return;
     for (let i = 0; i < flaggedIndexes.length; i++) {
       const idx = flaggedIndexes[i];
-      setBatchStatus(`[RE-TRANSCRIBING CLIP ${idx + 1} · ${i + 1}/${flaggedIndexes.length}]`);
+      setBatchStatus(`Re-transcribing clip ${idx + 1} · ${i + 1}/${flaggedIndexes.length}`);
       try {
         const suggestion = await handleWhisperClip(idx);
         if (suggestion) handleApplyWhisper(idx, suggestion);
       } catch {
-        setBatchStatus(`[ERROR: CLIP ${idx + 1} FAILED — SKIPPING]`);
+        setBatchStatus(`Error: clip ${idx + 1} failed — skipping`);
       }
     }
-    setBatchStatus('[SECOND PASS COMPLETE]');
+    setBatchStatus('Second pass complete');
     setTimeout(() => setBatchStatus(null), 4000);
   };
 
@@ -234,17 +234,17 @@ export default function EditorView() {
   const runScript = async () => {
     const script = loadTransformScript();
     if (!script.trim()) {
-      setScriptStatus('[NO SCRIPT — SET ONE IN SETTINGS]');
+      setScriptStatus('No script — set one in Settings');
       return;
     }
-    setScriptStatus('[RUNNING…]');
+    setScriptStatus('Running…');
     const result = await runUserScript(text, script);
     if (!result.ok) {
-      setScriptStatus(`[ERROR: ${result.error.toUpperCase()}]`);
+      setScriptStatus(`Error: ${result.error}`);
       return;
     }
     setText(result.text);
-    setScriptStatus(result.text === text ? '[SCRIPT RAN — NO CHANGES]' : '[SCRIPT APPLIED]');
+    setScriptStatus(result.text === text ? 'Script ran — no changes' : 'Script applied');
   };
 
   const toggleReading = () => {
@@ -256,11 +256,11 @@ export default function EditorView() {
       return;
     }
     if (!speechSynthesisAvailable()) {
-      setReadStatus('[ERROR: SPEECH UNAVAILABLE IN THIS BROWSER]');
+      setReadStatus('Error: speech unavailable in this browser');
       return;
     }
     if (!text.trim()) {
-      setReadStatus('[NOTHING TO READ YET]');
+      setReadStatus('Nothing to read yet');
       return;
     }
     readHandleRef.current = readAloud(text, {
@@ -272,25 +272,25 @@ export default function EditorView() {
       onError: (message) => {
         readHandleRef.current = null;
         setReading(false);
-        setReadStatus(`[ERROR: ${message}]`);
+        setReadStatus(`Error: ${message}`);
       },
     });
     setReading(true);
-    setReadStatus('[READING ALOUD]');
+    setReadStatus('Reading aloud');
   };
 
   const handleShare = async () => {
     try {
       await exportTranscript(article!.id);
-      setExportStatus('[DOWNLOADED]');
+      setExportStatus('Downloaded');
       setTimeout(() => setExportStatus(null), 4000);
     } catch {
-      setExportStatus('[ERROR: EXPORT FAILED]');
+      setExportStatus('Error: export failed');
     }
   };
 
   if (!article) {
-    return <main className="view"><p className="label">[LOADING…]</p></main>;
+    return <main className="view"><p className="label">Loading…</p></main>;
   }
 
   return (
@@ -326,10 +326,10 @@ export default function EditorView() {
             </div>
             <div className="editor-actions">
               {saveError ? (
-                <span role="alert" className="status-line error">[AUTOSAVE FAILED — WILL RETRY]</span>
+                <span role="alert" className="status-line error">Autosave failed — will retry</span>
               ) : (
                 <span aria-live="polite" className="status-line success">
-                  {saved ? '[SAVED]' : '[SAVING…]'}
+                  {saved ? 'Saved' : 'Saving…'}
                 </span>
               )}
               {exportStatus && (

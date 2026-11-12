@@ -1,9 +1,9 @@
 # Nakili — Agent Instructions
 
 Local-first dictation web app. React 19 + TypeScript + Vite, Zustand, Dexie (IndexedDB), Vitest.
-Design system: Broadcast Desk — warm near-black / warm off-white, signal red, Source Serif 4
+Design system: Broadcast Desk — warm near-black / warm off-white, brand teal, Source Serif 4
 for the transcript, Archivo Narrow for UI, IBM Plex Mono for timecode. Light, dark and system
-modes. No gradients/shadows, inline `[STATUS]` text instead of toasts.
+modes. No gradients/shadows, inline status text instead of toasts.
 
 ## Always-on standards
 
@@ -18,7 +18,7 @@ Read the relevant pack before large changes. Highlights that override anything e
 - Tests must pass (`npm test`) and `npm run build` must succeed before any commit.
 - TDD: failing test first for behavior changes.
 - Never weaken a test to make it pass; fix the code or justify the change to the user.
-- No gradients, no box-shadows, no toast popups — use inline `[STATUS]` text.
+- No gradients, no box-shadows, no toast popups — use inline status text.
 
 ## Specialized subagents
 

@@ -6,6 +6,7 @@ import { speechSupported } from './ui/speechSupport';
 import { HelpDialog } from './ui/HelpDialog';
 import { SettingsDialog } from './ui/SettingsDialog';
 import LibraryView from './features/library/LibraryView';
+import LandingView from './features/library/LandingView';
 import RecordingView from './features/recording/RecordingView';
 import EditorView from './features/editor/EditorView';
 import { APP_VERSION, versionLabel } from './version';
@@ -28,6 +29,12 @@ function AppShell({ children }: { children: React.ReactNode }) {
           </button>
           <nav className="header-nav" aria-label="Site">
             <button aria-current={view === 'home' ? 'page' : undefined} onClick={() => navigate('home')}>
+              Home
+            </button>
+            <button
+              aria-current={view !== 'home' ? 'page' : undefined}
+              onClick={() => navigate('library')}
+            >
               Recordings
             </button>
             <button onClick={() => setSettingsOpen(true)}>Settings</button>
@@ -85,7 +92,8 @@ export default function App() {
 
   return (
     <AppShell>
-      {view === 'home' && <LibraryView />}
+      {view === 'home' && <LandingView />}
+      {view === 'library' && <LibraryView />}
       {view === 'record' && <RecordingView />}
       {view === 'editor' && <EditorView />}
     </AppShell>

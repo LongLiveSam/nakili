@@ -77,11 +77,11 @@ export function ClipSidebar({
 
   const runWhisper = (index: number) => {
     if (!onWhisperClip || !onApplyWhisper) return;
-    setWhisperState({ busy: true, msg: '[LOCAL MODEL: LOADING / TRANSCRIBING…]' });
+    setWhisperState({ busy: true, msg: 'Local model: loading / transcribing…' });
     void onWhisperClip(index)
-      .then((text) => setWhisperState({ busy: false, msg: `[WHISPER SUGGESTION]: ${text}`, suggestion: text }))
+      .then((text) => setWhisperState({ busy: false, msg: `Whisper suggestion: ${text}`, suggestion: text }))
       .catch((err: unknown) =>
-        setWhisperState({ busy: false, msg: `[ERROR: LOCAL TRANSCRIBE — ${err instanceof Error ? err.message : 'FAILED'}]` }));
+        setWhisperState({ busy: false, msg: `Error: local transcribe — ${err instanceof Error ? err.message : 'failed'}` }));
   };
 
   useEffect(() => {
@@ -192,7 +192,7 @@ export function ClipSidebar({
                     disabled={whisperState?.busy}
                     style={{ minHeight: 36, fontSize: 12 }}
                   >
-                    {whisperState?.busy ? '[Working…]' : 'Re-transcribe (local)'}
+                    {whisperState?.busy ? 'Working…' : 'Re-transcribe (local)'}
                   </button>
                   {!whisperState?.busy && whisperState?.suggestion && (
                     <button

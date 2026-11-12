@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-export type View = 'home' | 'record' | 'editor';
+export type View = 'home' | 'library' | 'record' | 'editor';
 
 interface AppState {
   view: View;

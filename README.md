@@ -87,10 +87,10 @@ Deployment options are documented in [docs/DEPLOY.md](docs/DEPLOY.md).
 
 ## Design
 
-Broadcast Desk: a warm near-black or cool studio-wall surface, signal red for
+Broadcast Desk: a warm near-black or cool studio-wall surface, brand teal for
 the tally and the primary action, Source Serif 4 for the transcript, Archivo
 Narrow for the interface, and IBM Plex Mono for timecode. Light, dark and system
-modes; flat surfaces, hairline rules, no gradients or shadows, inline `[STATUS]`
+modes; flat surfaces, hairline rules, no gradients or shadows, inline status
 text instead of toasts.
 
 ## Roadmap

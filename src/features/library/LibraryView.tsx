@@ -3,10 +3,8 @@ import { useLibraryStore, formatDuration } from './libraryStore';
 import { ConfirmDialog } from './ConfirmDialog';
 import { useAppStore } from '../../ui/appStore';
 import { exportTranscript, exportDocx, exportFullRecording } from '../../core/services/ExportService';
-import { importAudioFile } from '../../core/services/importAudio';
-import { isWhisperBetaEnabled } from '../../core/services/localWhisper';
 import { MoreVerticalIcon, SearchIcon } from '../../ui/icons';
-import { Landing } from './Landing';
+import { ImportAudio } from './ImportAudio';
 import type { Article } from '../../core/models';
 
 function formatDate(ms: number): string {
@@ -28,9 +26,7 @@ export default function LibraryView() {
   const [renaming, setRenaming] = useState<Article | null>(null);
   const [renameText, setRenameText] = useState('');
   const [deleting, setDeleting] = useState<Article | null>(null);
-  const [importing, setImporting] = useState(false);
   const menuWrapRef = useRef<HTMLDivElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { void refresh(); }, [refresh]);
 
@@ -43,39 +39,6 @@ export default function LibraryView() {
   const handleNew = async () => {
     const id = await createArticle();
     navigate('record', id);
-  };
-
-  const handleImportClick = () => {
-    if (!isWhisperBetaEnabled()) {
-      setStatus('[ENABLE THE LOCAL ENGINE IN SETTINGS TO IMPORT AUDIO]');
-      return;
-    }
-    fileInputRef.current?.click();
-  };
-
-  const handleImportFile = async (file: File) => {
-    setImporting(true);
-    setStatus('[DECODING AUDIO…]');
-    try {
-      const result = await importAudioFile(file, {
-        onStatus: setStatus,
-        onProgress: (fraction) => {
-          setStatus(`[TRANSCRIBING ${Math.round(fraction * 100)}%]`);
-        },
-      });
-      await refresh();
-      if (result.failedClips > 0) {
-        setStatus(`[IMPORTED WITH ${result.failedClips} FAILED CLIP${result.failedClips === 1 ? '' : 'S'}]`);
-      } else {
-        setStatus(`[IMPORTED ${result.clipCount} CLIP${result.clipCount === 1 ? '' : 'S'}]`);
-      }
-      navigate('editor', result.articleId);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'IMPORT FAILED';
-      setStatus(`[ERROR: ${message}]`);
-    } finally {
-      setImporting(false);
-    }
   };
 
   useEffect(() => {
@@ -106,32 +69,21 @@ export default function LibraryView() {
 
   return (
     <main className={`view${loaded ? '' : ' view-boot'}`} id="main">
-      {articles.length > 0 && (
-        <div className="view-header">
-          <h1>Recordings</h1>
-          <div className="view-actions">
-            <button onClick={handleImportClick} disabled={importing}>Import audio</button>
-            <button className="cta" onClick={() => void handleNew()}>New recording</button>
-          </div>
+      <div className="view-header">
+        <h1>Recordings</h1>
+        <div className="view-actions">
+          <ImportAudio
+            onStatus={setStatus}
+            onImported={(id) => navigate('editor', id)}
+          >
+            Import audio
+          </ImportAudio>
+          <button className="cta" onClick={() => void handleNew()}>New recording</button>
         </div>
-      )}
-
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="audio/*"
-        className="visually-hidden"
-        tabIndex={-1}
-        aria-label="Import an audio file"
-        onChange={(e) => {
-          const file = e.target.files?.[0];
-          e.target.value = '';
-          if (file) void handleImportFile(file);
-        }}
-      />
+      </div>
 
       {status && (
-        <p className={`status-line${status.startsWith('[ERROR') ? ' error' : ''}`} role={status.startsWith('[ERROR') ? 'alert' : undefined}>
+        <p className={`status-line${status.startsWith('Error') ? ' error' : ''}`} role={status.startsWith('Error') ? 'alert' : undefined}>
           {status}
         </p>
       )}
@@ -151,11 +103,14 @@ export default function LibraryView() {
       )}
 
       {!loaded ? (
-        <p className="label" aria-busy="true" aria-live="polite">[LOADING RECORDINGS…]</p>
+        <p className="label" aria-busy="true" aria-live="polite">Loading recordings…</p>
       ) : articles.length === 0 ? (
-        <Landing onStart={() => void handleNew()} onImport={handleImportClick} />
+        <div className="empty-state">
+          <p className="label">No recordings yet</p>
+          <p>Start a new recording or import an audio file. Everything stays on this device.</p>
+        </div>
       ) : visible.length === 0 ? (
-        <p className="status-line" role="status">[NO MATCHES — CLEAR THE SEARCH FIELD]</p>
+        <p className="status-line" role="status">No matches — clear the search field</p>
       ) : (
         <ul role="list" className="recording-list">
           {visible.map((a) => (
@@ -197,22 +152,22 @@ export default function LibraryView() {
                     <button role="menuitem" onClick={async () => { setMenuFor(null); await duplicateArticle(a.id); }}>
                       Duplicate
                     </button>
-                    <button role="menuitem" onClick={async () => { setMenuFor(null); try { await exportTranscript(a.id); setStatus('[DOWNLOADED TRANSCRIPT]'); } catch { setStatus('[ERROR: EXPORT FAILED]'); } }}>
+                    <button role="menuitem" onClick={async () => { setMenuFor(null); try { await exportTranscript(a.id); setStatus('Downloaded transcript'); } catch { setStatus('Error: export failed'); } }}>
                       Export text
                     </button>
-                    <button role="menuitem" onClick={async () => { setMenuFor(null); try { await exportTranscript(a.id, 'md'); setStatus('[DOWNLOADED MARKDOWN]'); } catch { setStatus('[ERROR: EXPORT FAILED]'); } }}>
+                    <button role="menuitem" onClick={async () => { setMenuFor(null); try { await exportTranscript(a.id, 'md'); setStatus('Downloaded Markdown'); } catch { setStatus('Error: export failed'); } }}>
                       Export Markdown
                     </button>
-                    <button role="menuitem" onClick={async () => { setMenuFor(null); try { await exportDocx(a.id); setStatus('[DOWNLOADED DOCX]'); } catch { setStatus('[ERROR: EXPORT FAILED]'); } }}>
+                    <button role="menuitem" onClick={async () => { setMenuFor(null); try { await exportDocx(a.id); setStatus('Downloaded Word document'); } catch { setStatus('Error: export failed'); } }}>
                       Export Word (.docx)
                     </button>
-                    <button role="menuitem" onClick={async () => { setMenuFor(null); try { await exportFullRecording(a.id, 'mp3'); setStatus('[DOWNLOADED AUDIO · MP3]'); } catch { setStatus('[ERROR: EXPORT FAILED]'); } }}>
+                    <button role="menuitem" onClick={async () => { setMenuFor(null); try { await exportFullRecording(a.id, 'mp3'); setStatus('Downloaded audio · MP3'); } catch { setStatus('Error: export failed'); } }}>
                       Export audio · MP3
                     </button>
-                    <button role="menuitem" onClick={async () => { setMenuFor(null); try { await exportFullRecording(a.id, 'wav'); setStatus('[DOWNLOADED AUDIO · WAV]'); } catch { setStatus('[ERROR: EXPORT FAILED]'); } }}>
+                    <button role="menuitem" onClick={async () => { setMenuFor(null); try { await exportFullRecording(a.id, 'wav'); setStatus('Downloaded audio · WAV'); } catch { setStatus('Error: export failed'); } }}>
                       Export audio · WAV
                     </button>
-                    <button role="menuitem" onClick={async () => { setMenuFor(null); try { await exportFullRecording(a.id, 'webm'); setStatus('[DOWNLOADED AUDIO · ORIGINAL]'); } catch { setStatus('[ERROR: EXPORT FAILED]'); } }}>
+                    <button role="menuitem" onClick={async () => { setMenuFor(null); try { await exportFullRecording(a.id, 'webm'); setStatus('Downloaded audio · original'); } catch { setStatus('Error: export failed'); } }}>
                       Export audio · Original
                     </button>
                     <button role="menuitem" className="danger" onClick={() => { setDeleting(a); setMenuFor(null); }}>

@@ -154,7 +154,7 @@ export const useRecordingStore = create<RecordingState>((set, get) => ({
       set({
         status: 'idle',
         errorMessage:
-          '[ERROR: MICROPHONE ACCESS DENIED — ALLOW MIC FOR THIS SITE IN BROWSER SETTINGS, THEN RETRY]',
+          'Error: microphone access denied — allow mic for this site in browser settings, then retry',
       });
       speech = null;
       recorder = null;
@@ -180,11 +180,11 @@ export const useRecordingStore = create<RecordingState>((set, get) => ({
       });
     speech!.onError = (err, fatal) => {
       if (fatal) {
-        set({ errorMessage: `[ERROR: SPEECH RECOGNITION ${err.toUpperCase()} — AUDIO KEEPS RECORDING, LIVE TEXT PAUSED]` });
+        set({ errorMessage: `Error: speech recognition ${err} — audio keeps recording, live text paused` });
       }
     };
     recorder!.onError = () => {
-      set({ recorderNotice: '[NOTICE: AUDIO RECORDING ERROR — CAPTURED AUDIO IS KEPT]' });
+      set({ recorderNotice: 'Notice: audio recording error — captured audio is kept' });
     };
     recorder!.start({
       startIndex: appendBase?.indexBase ?? 0,

@@ -190,17 +190,17 @@ export function SettingsDialog({ open, onClose }: Props) {
 
   const downloadModel = async () => {
     writeWhisperSettings({ model: whisperModel, quantized: whisperQuantized, language: whisperLang });
-    setModelStatus('[DOWNLOADING MODEL…]');
+    setModelStatus('Downloading model…');
     setModelProgress(0);
     try {
       await preloadWhisperModel((fraction) => {
         setModelProgress(fraction);
-        setModelStatus(`[DOWNLOADING MODEL ${Math.round(fraction * 100)}%]`);
+        setModelStatus(`Downloading model ${Math.round(fraction * 100)}%`);
       });
-      setModelStatus('[MODEL READY]');
+      setModelStatus('Model ready');
       await refreshModelBytes(whisperModel);
     } catch (err) {
-      setModelStatus(`[ERROR: ${err instanceof Error ? err.message : 'DOWNLOAD FAILED'}]`);
+      setModelStatus(`Error: ${err instanceof Error ? err.message : 'download failed'}`);
     } finally {
       setModelProgress(null);
     }
@@ -208,7 +208,7 @@ export function SettingsDialog({ open, onClose }: Props) {
 
   const removeModel = async () => {
     const removed = await clearModelCache(whisperModel);
-    setModelStatus(removed > 0 ? '[MODEL REMOVED FROM CACHE]' : '[MODEL WAS NOT CACHED]');
+    setModelStatus(removed > 0 ? 'Model removed from cache' : 'Model was not cached');
     await refreshModelBytes(whisperModel);
   };
 
@@ -227,9 +227,9 @@ export function SettingsDialog({ open, onClose }: Props) {
   const runBackup = async () => {
     try {
       await exportAllBackup();
-      setBackupStatus('[BACKUP DOWNLOADED]');
+      setBackupStatus('Backup downloaded');
     } catch {
-      setBackupStatus('[ERROR: BACKUP FAILED]');
+      setBackupStatus('Error: backup failed');
     }
   };
 
@@ -240,7 +240,7 @@ export function SettingsDialog({ open, onClose }: Props) {
       aria-label="Settings"
       onClick={(e) => { if (e.target === ref.current) onClose(); }}
     >
-      <button className="ghost dialog-close" aria-label="Close" onClick={onClose}>[ X ]</button>
+      <button className="ghost dialog-close" aria-label="Close" onClick={onClose}>×</button>
       <h2 style={{ marginTop: 0 }}>Settings</h2>
 
       <h3>Appearance</h3>
@@ -339,8 +339,8 @@ export function SettingsDialog({ open, onClose }: Props) {
           <p className="status-line" role="status">
             {modelStatus ??
               (modelBytes && modelBytes > 0
-                ? `[MODEL CACHED · ${formatModelBytes(modelBytes)}]`
-                : `[MODEL NOT DOWNLOADED · ≈${whisperModelInfo(whisperModel).downloadMB} MB ON FIRST USE]`)}
+                ? `Model cached · ${formatModelBytes(modelBytes)}`
+                : `Model not downloaded · ≈${whisperModelInfo(whisperModel).downloadMB} MB on first use`)}
           </p>
           <div className="dialog-actions" style={{ justifyContent: 'flex-start' }}>
             <button onClick={() => void downloadModel()} disabled={modelProgress !== null}>
@@ -475,7 +475,7 @@ export function SettingsDialog({ open, onClose }: Props) {
       </p>
       {getLastSalvageReport().issues.length > 0 && (
         <p role="status" className="status-line">
-          [SETTINGS REPAIRED: {getLastSalvageReport().issues.length}]
+          Settings repaired: {getLastSalvageReport().issues.length}
         </p>
       )}
       <label className="label" htmlFor="audio-retention">Keep audio for</label>
@@ -513,7 +513,7 @@ export function SettingsDialog({ open, onClose }: Props) {
       )}
       {usage && pressureLevel(usage.usage, usage.quota) !== 'ok' && (
         <p role="status" className="status-line error">
-          [STORAGE {pressurePercent(usage.usage, usage.quota)}% FULL — EXPORT A BACKUP OR SHORTEN AUDIO RETENTION]
+          Storage {pressurePercent(usage.usage, usage.quota)}% full — export a backup or shorten audio retention
         </p>
       )}
       <div style={{ marginTop: 12 }}>
@@ -536,7 +536,7 @@ export function SettingsDialog({ open, onClose }: Props) {
 
       <div className="dialog-actions sticky">
         <button onClick={onClose}>Cancel</button>
-        <button className="primary" onClick={save}>{saved ? '[Saved]' : 'Save'}</button>
+        <button className="primary" onClick={save}>{saved ? 'Saved' : 'Save'}</button>
       </div>
     </dialog>
   );

@@ -44,8 +44,8 @@ audio import and re-transcription.
 - Voice commands, auto paragraphs, filler removal, vocabulary correction, smart
   typography, and an optional transform script.
 - Exports: text, Markdown, DOCX, MP3, WAV, original audio, and a full backup.
-- Four skins today (Paper, Primer, Neutral, Nothing); this round replaces the
-  Nothing-led system.
+- One Broadcast Desk world with light, dark and system modes; the former
+  four-skin system is retired.
 - No account, no server, no sync; audio and text stay in the browser.
 - Chrome and Edge are supported; other browsers get a blocking notice.
 - African language coverage in the local engine: Kiswahili, Amharic, Hausa,
@@ -57,7 +57,7 @@ audio import and re-transcription.
 - Mission: make dictation available in as many African languages as possible.
 - Voice: plain, direct, respectful; no hype and no gamification.
 - Visual world: Broadcast Desk — warm near-black or cool studio-wall light,
-  signal red for the tally and the primary action, Source Serif 4 for the
+  brand teal #2aa2a4 for the tally and the primary action, Source Serif 4 for the
   transcript, Archivo Narrow for the interface, IBM Plex Mono for timecode.
   Light, dark and system modes. The former Nothing design language is retired.
 

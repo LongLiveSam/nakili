@@ -27,6 +27,7 @@
           var dark = mode === 'dark' || (mode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
           document.documentElement.setAttribute('data-mode', dark ? 'dark' : 'light');
           document.documentElement.setAttribute('data-mode-preference', mode);
+          document.documentElement.classList.add('m-enter');
           var meta = document.querySelector('meta[name="theme-color"]');
           if (meta) meta.setAttribute('content', dark ? '#12100e' : '#eef0ec');
         } catch (e) { /* keep the defaults */ }

@@ -31,7 +31,7 @@ describe('app shell', () => {
       await screen.findByRole('heading', { name: /nakili/i }),
     ).toBeInTheDocument();
     expect(screen.getByText(/edit the words in place/i)).toBeInTheDocument();
-    expect(screen.getByText('Live transcription')).toBeInTheDocument();
+    expect(screen.getByText('Transcript')).toBeInTheDocument();
   });
 
   it('shows site header with brand, Recordings link and Help', () => {

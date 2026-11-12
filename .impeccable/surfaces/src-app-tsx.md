@@ -9,7 +9,7 @@ related_targets: ["src/features/editor/EditorView.tsx","src/features/library/Lib
 
 THESIS: Nakili is a broadcast desk for the voice: the transcript is the program, the clips are the cue sheet, and the tally light is the only saturated red on the page. It refuses the generic dark audio app (neon glow, waveform wallpaper) and the Nothing dot-matrix.
 
-OWN-WORLD: Warm near-black (#12100e) and warm off-white (#f4efe6), signal red (#e05a45 dark / #c8402f light), amber (#d9a441), graphite rules. Source Serif 4 for the transcript and long-form copy; Archivo Narrow for UI labels, navigation and the wordmark; IBM Plex Mono for timecode and status. Flat surfaces, hairline rules, 2px corners, no gradients or shadows. Signature move: the cue sheet, with a red tally state on the active clip.
+OWN-WORLD: Warm near-black (#12100e) and cool studio wall (#eef0ec), brand teal (#2aa2a4, lifting to #4cc4c6 in dark mode), amber (#d9a441), graphite rules. Source Serif 4 for the transcript and long-form copy; Archivo Narrow for UI labels, navigation and the wordmark; IBM Plex Mono for timecode and status. Flat surfaces, hairline rules, 2px corners, no gradients or shadows. Signature move: the cue sheet, with a teal tally state on the active clip.
 
 STORY: The writer sees the transcript as the program, the clips as a cue sheet, and the recording state as a tally light. They understand that the audio is the source and the text is the work.
 

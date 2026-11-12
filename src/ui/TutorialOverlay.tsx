@@ -18,7 +18,7 @@ export function TutorialOverlay({ open, onDone }: Props) {
 
   return (
     <dialog ref={ref} onClose={onDone} aria-label="Welcome">
-      <button className="ghost dialog-close" aria-label="Close" onClick={onDone}>[ X ]</button>
+      <button className="ghost dialog-close" aria-label="Close" onClick={onDone}>×</button>
       <h2 style={{ marginTop: 0 }}>Three things to know</h2>
 
       <div style={{ display: 'grid', gap: 16, margin: '16px 0' }}>

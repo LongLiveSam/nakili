@@ -1,16 +1,28 @@
 import { MicIcon, PlayIcon, SearchIcon } from '../../ui/icons';
+import { ImportAudio } from './ImportAudio';
 
 /**
- * Broadcast Desk landing: shown on Home until the first recording exists.
- * The transcript is the program; the preview is the cue sheet.
+ * Broadcast Desk welcome page. Home is always this surface; the recordings
+ * list lives behind the Recordings tab.
  */
-export function Landing({ onStart, onImport }: { onStart: () => void; onImport?: () => void }) {
+export function Landing({
+  onStart,
+  onViewRecordings,
+  onImported,
+  onStatus,
+  status,
+}: {
+  onStart: () => void;
+  onViewRecordings: () => void;
+  onImported: (articleId: string) => void;
+  onStatus: (message: string) => void;
+  status: string | null;
+}) {
   return (
     <div className="landing">
       <div className="wrap">
       <section className="hero" aria-label="Introduction" data-enter>
         <div className="hero-copy">
-          <div className="dot-block hero-dots" aria-hidden="true" />
           <h1 className="hero-title">
             Nakili
             <span className="hero-title-category">Local-first dictation</span>
@@ -22,12 +34,21 @@ export function Landing({ onStart, onImport }: { onStart: () => void; onImport?:
             <button className="cta" onClick={onStart}>
               Start dictating
             </button>
-            {onImport && (
-              <button className="ghost" onClick={onImport}>
-                Import an audio file
-              </button>
-            )}
+            <ImportAudio onStatus={onStatus} onImported={onImported} className="ghost">
+              Import an audio file
+            </ImportAudio>
+            <button className="ghost" onClick={onViewRecordings}>
+              View recordings
+            </button>
           </div>
+          {status && (
+            <p
+              className={status.startsWith('Error') ? 'status-line error' : 'status-line'}
+              role={status.startsWith('Error') ? 'alert' : 'status'}
+            >
+              {status}
+            </p>
+          )}
         </div>
 
         <div className="hero-preview" aria-hidden="true">
@@ -51,26 +72,24 @@ export function Landing({ onStart, onImport }: { onStart: () => void; onImport?:
         <div className="steps">
           <div>
             <MicIcon size={20} />
-            <h2>Live transcription</h2>
+            <h2>Transcript</h2>
             <p>
-              Words appear as you talk. Say “new paragraph” or “period” and
-              Nakili writes the structure for you.
+              Words appear as you talk. Say “new paragraph” and Nakili
+              writes the structure.
             </p>
           </div>
           <div>
             <SearchIcon size={20} />
-            <h2>Clip playback</h2>
+            <h2>Cue sheet</h2>
             <p>
-              Click any sentence to highlight its 30-second clip, listen to the
-              exact moment, and fix it in place.
+              Click a sentence to hear its clip, then fix the words in place.
             </p>
           </div>
           <div>
             <PlayIcon size={20} />
-            <h2>Text and audio exports</h2>
+            <h2>Exports</h2>
             <p>
-              Download the transcript as text or Markdown, and the audio as MP3,
-              WAV, or the original recording.
+              Download text, Markdown, MP3, WAV, or the original audio.
             </p>
           </div>
         </div>
@@ -90,9 +109,12 @@ export function Landing({ onStart, onImport }: { onStart: () => void; onImport?:
 
       <section aria-label="Get started" className="landing-section landing-close">
         <p className="status-line">
-          [PRIVACY: ALL AUDIO AND TEXT STAY ON YOUR DEVICE. NOTHING IS UPLOADED.]
+          Privacy: all audio and text stay on your device. Nothing is uploaded.
         </p>
-        <button className="cta" onClick={onStart}>Start dictating</button>
+        <div className="hero-actions">
+          <button className="cta" onClick={onStart}>Start dictating</button>
+          <button className="ghost" onClick={onViewRecordings}>View recordings</button>
+        </div>
       </section>
       </div>
     </div>

@@ -63,7 +63,7 @@ export interface SalvageReport {
 
 let lastReport: SalvageReport = { version: SETTINGS_SCHEMA_VERSION, issues: [] };
 
-/** The most recent repair pass, for inline `[STATUS]` display. */
+/** The most recent repair pass, for inline status display. */
 export function getLastSalvageReport(): SalvageReport {
   return lastReport;
 }

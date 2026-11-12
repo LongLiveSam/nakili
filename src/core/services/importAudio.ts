@@ -130,7 +130,7 @@ export interface ImportResult {
  * playable recording rather than losing the import.
  */
 export async function importAudioFile(file: File, opts: ImportOptions = {}): Promise<ImportResult> {
-  opts.onStatus?.('[DECODING AUDIO…]');
+  opts.onStatus?.('Decoding audio…');
   const { pcm, sampleRate, durationSec } = await decodeAudioFile(file);
   const clips = splitPcmIntoClips(pcm, sampleRate);
   if (clips.length === 0) throw new Error('NO AUDIO IN FILE');
@@ -156,7 +156,7 @@ export async function importAudioFile(file: File, opts: ImportOptions = {}): Pro
   let failedClips = 0;
 
   for (const clip of clips) {
-    opts.onStatus?.(`[TRANSCRIBING CLIP ${clip.index + 1} OF ${clips.length}…]`);
+    opts.onStatus?.(`Transcribing clip ${clip.index + 1} of ${clips.length}…`);
     const slice = pcm.subarray(clip.index * perChunk, (clip.index + 1) * perChunk);
     try {
       const text = await transcribePcmLocally(slice, sampleRate, (fraction) => {

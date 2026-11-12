@@ -6,8 +6,9 @@ colors:
   studio-wall: "#eef0ec"
   surface-dark: "#1a1714"
   surface-light: "#f7f8f4"
-  signal-red: "#e05a45"
-  signal-red-light: "#c8402f"
+  brand-teal: "#2aa2a4"
+  brand-teal-deep: "#1f7f81"
+  brand-teal-light: "#4cc4c6"
   amber: "#d9a441"
   ink-dark: "#f2ece1"
   ink-light: "#171a16"
@@ -109,7 +110,7 @@ spacing:
   3xl: "64px"
 components:
   button-primary:
-    backgroundColor: "{colors.signal-red}"
+    backgroundColor: "{colors.brand-teal}"
     textColor: "{colors.studio-black}"
     rounded: "{rounded.sm}"
     padding: "10px 18px"
@@ -124,7 +125,7 @@ components:
     rounded: "{rounded.sm}"
     padding: "10px 12px"
   clip-row-active:
-    backgroundColor: "{colors.signal-red}"
+    backgroundColor: "{colors.brand-teal}"
     textColor: "{colors.studio-black}"
     rounded: "{rounded.sm}"
     padding: "10px 12px"
@@ -149,9 +150,10 @@ seek strip, where the active clip is a red-tinted tally.
 
 - **Studio black** `#12100e` — the dark ground.
 - **Studio wall** `#eef0ec` — the light ground, a cool paper rather than cream.
-- **Signal red** `#e05a45` dark / `#c8402f` light — the tally, the primary
-  action, the active clip, and the focus ring. It is the only saturated colour
-  in the interface.
+- **Brand teal** `#2aa2a4` — the tally, the primary action, the active clip,
+  and the focus ring. It is the only saturated colour in the interface. In dark
+  mode the accent lifts to `#4cc4c6` for visibility; the primary button keeps
+  the `#2aa2a4` ground with near-black text.
 - **Amber** `#d9a441` — a secondary signal for warnings and the recording
   timer, used sparingly.
 - **Ink** `#f2ece1` dark / `#171a16` light — body and display text.
@@ -192,7 +194,7 @@ the recording tally and the play glyph.
 
 ## Components
 
-- **Primary button:** signal red ground, studio-black text, 2px radius, 10×18
+- **Primary button:** brand teal ground, studio-black text, 2px radius, 10×18
   padding. Used for Start dictating and New recording.
 - **Secondary button:** transparent ground, 1px rule border, ink text. Used for
   Download, Rename, Import audio and dialog actions.
@@ -204,13 +206,13 @@ the recording tally and the play glyph.
 - **Transcript:** a serif textarea on the surface colour, with a transparent
   mirror overlay for playback highlighting. The overlay uses the same serif
   metrics as the textarea.
-- **Status line:** IBM Plex Mono, uppercase, inline. Errors use the danger red;
+- **Status line:** IBM Plex Mono, sentence case, inline. Errors use the danger red;
   success uses ink. No toasts.
 
 ## Do's and Don'ts
 
 - **Do** keep the transcript serif and the interface condensed sans.
-- **Do** use signal red for one job at a time: the tally, the primary action,
+- **Do** use brand teal for one job at a time: the tally, the primary action,
   or the active clip.
 - **Do** keep the light mode a cool studio wall, not a cream page.
 - **Do** support system, light and dark modes; system follows the device.
