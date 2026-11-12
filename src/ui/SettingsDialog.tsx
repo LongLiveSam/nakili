@@ -6,6 +6,10 @@ import {
   PIPELINE_KEYS, loadTransformScript, readVocabularyThreshold,
 } from '../core/services/pipelineSettings';
 import { getLastSalvageReport } from '../core/services/settingsMigration';
+import {
+  RETENTION_KEY, pressureLevel, pressurePercent, readRetentionChoice,
+  type RetentionChoice,
+} from '../core/services/retention';
 import { Toggle } from './Toggle';
 
 interface Props {
@@ -46,6 +50,7 @@ export function SettingsDialog({ open, onClose }: Props) {
   const [fontSize, setFontSize] = useState(loadStored('nakili-fontsize', '18'));
   const [threshold, setThreshold] = useState(String(readVocabularyThreshold()));
   const [script, setScript] = useState(loadTransformScript());
+  const [retention, setRetention] = useState<RetentionChoice>(readRetentionChoice());
   const [mics, setMics] = useState<MediaDeviceInfo[]>([]);
   const [usage, setUsage] = useState<{ usage: number; quota: number } | null>(null);
   const [clearArmed, setClearArmed] = useState(false);
@@ -62,6 +67,7 @@ export function SettingsDialog({ open, onClose }: Props) {
       setFontSize(loadStored('nakili-fontsize', '18'));
       setThreshold(String(readVocabularyThreshold()));
       setScript(loadTransformScript());
+      setRetention(readRetentionChoice());
       setSaved(false);
       setBackupStatus(null);
       setClearArmed(false);
@@ -286,6 +292,35 @@ export function SettingsDialog({ open, onClose }: Props) {
           [SETTINGS REPAIRED: {getLastSalvageReport().issues.length}]
         </p>
       )}
+      <label className="label" htmlFor="audio-retention">Keep audio for</label>
+      <select
+        id="audio-retention"
+        value={retention}
+        onChange={(e) => {
+          const choice = e.target.value as RetentionChoice;
+          setRetention(choice);
+          saveStored(RETENTION_KEY, choice);
+        }}
+        style={{
+          font: 'inherit',
+          background: 'var(--surface)',
+          color: 'var(--text-primary)',
+          border: '1px solid var(--border-visible)',
+          borderRadius: 8,
+          minHeight: 44,
+          padding: '0 12px',
+          width: '100%',
+        }}
+      >
+        <option value="forever">Forever</option>
+        <option value="365">1 year</option>
+        <option value="90">90 days</option>
+        <option value="30">30 days</option>
+      </select>
+      <p style={{ color: 'var(--text-disabled)', fontSize: 12 }}>
+        Transcripts are never deleted. Expired clips are removed at startup, and
+        affected text is marked approximate.
+      </p>
       <button onClick={() => void runBackup()}>Export all data</button>
       {backupStatus && (
         <span className={backupStatus.startsWith('[ERROR') ? 'status-line error' : 'status-line'}
@@ -297,6 +332,11 @@ export function SettingsDialog({ open, onClose }: Props) {
         <p style={{ color: 'var(--text-secondary)', fontSize: 12 }}>
           Storage used: {(usage.usage / (1024 * 1024)).toFixed(1)} MB
           {usage.quota > 0 && ` of ~${(usage.quota / (1024 * 1024 * 1024)).toFixed(1)} GB`}
+        </p>
+      )}
+      {usage && pressureLevel(usage.usage, usage.quota) !== 'ok' && (
+        <p role="status" className="status-line error">
+          [STORAGE {pressurePercent(usage.usage, usage.quota)}% FULL — EXPORT A BACKUP OR SHORTEN AUDIO RETENTION]
         </p>
       )}
       <div style={{ marginTop: 12 }}>

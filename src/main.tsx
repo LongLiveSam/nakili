@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import './styles/global.css';
 import { initTheme } from './ui/theme';
 import { salvageSettings } from './core/services/settingsMigration';
+import { pruneExpiredAudio } from './core/services/retention';
 import App from './App';
 
 // Repair drifted preference keys before anything reads them (Handy-style
@@ -15,6 +16,11 @@ createRoot(document.getElementById('root')!).render(
     <App />
   </StrictMode>,
 );
+
+// Retention only runs for a window the user chose; it returns null on the
+// default. Deferred until after the first paint so a large prune never blocks
+// interaction, and failure must not stop the app.
+void pruneExpiredAudio().catch(() => {});
 
 // PWA: offline app shell (production only — keeps HMR clean in dev).
 // BASE_URL keeps the worker inside a GitHub Pages project subpath.
