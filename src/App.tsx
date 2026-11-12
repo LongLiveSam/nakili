@@ -8,6 +8,7 @@ import { SettingsDialog } from './ui/SettingsDialog';
 import LibraryView from './features/library/LibraryView';
 import RecordingView from './features/recording/RecordingView';
 import EditorView from './features/editor/EditorView';
+import { APP_VERSION, versionLabel } from './version';
 
 function AppShell({ children }: { children: React.ReactNode }) {
   const [helpOpen, setHelpOpen] = useState(false);
@@ -45,6 +46,9 @@ function AppShell({ children }: { children: React.ReactNode }) {
       <footer className="app-footer">
         <span>Local-first dictation. Nothing leaves your browser.</span>
         <span className="footer-controls">
+          <span className="app-version" title={`Nakili ${APP_VERSION}`}>
+            {versionLabel()}
+          </span>
           <a
             href={`mailto:culturedrabbit@gmail.com?subject=${encodeURIComponent('Nakili feedback')}&body=${encodeURIComponent(`\n\n—\n${navigator.userAgent}`)}`}
           >

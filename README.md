@@ -21,6 +21,28 @@ Requires **Chrome or Edge** (uses the Web Speech API).
 Deployment options and the local production server are documented in
 [docs/DEPLOY.md](docs/DEPLOY.md).
 
+## Versioning
+
+The app version is shown in the footer and in Help. It uses decimal minor
+steps, so small changes move `0.01 → 0.02`, larger milestones jump to `0.5`,
+and a rewrite can go to `1.0`. Every release is a git tag and a changelog entry.
+
+```bash
+npm run release -- bump --note "what changed"   # +0.01
+npm run release -- set 0.5 --note "public beta" # jump
+npm run release -- bump --dry-run               # preview only
+```
+
+The script updates `package.json`, `package-lock.json` and `CHANGELOG.md`,
+commits `chore: release vX`, and creates the tag `vX`. Push with:
+
+```bash
+git push --follow-tags
+```
+
+The current version is the single source of truth in `package.json`; Vite
+injects it as `__APP_VERSION__` at build time.
+
 ## Using it
 
 - **New recording** → speak → **Stop** saves transcript + audio.

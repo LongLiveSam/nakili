@@ -5,6 +5,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import App from '../App';
 import { useAppStore } from './appStore';
 import { useLibraryStore } from '../features/library/libraryStore';
+import { APP_VERSION } from '../version';
 
 describe('app shell', () => {
   beforeEach(() => {
@@ -39,6 +40,11 @@ describe('app shell', () => {
     // One Help entry (header); the footer repeats only theme controls.
     expect(screen.getByRole('button', { name: 'Help' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /skip to content/i })).toHaveAttribute('href', '#main');
+  });
+
+  it('shows the app version in the footer', () => {
+    render(<App />);
+    expect(screen.getByText(`v${APP_VERSION}`)).toBeInTheDocument();
   });
 
   it('opens the Help dialog from the header', async () => {

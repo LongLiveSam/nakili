@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { versionLabel } from '../version';
 
 interface Props {
   open: boolean;
@@ -87,6 +88,8 @@ export function HelpDialog({ open, onClose }: Props) {
           Problems or feedback:{' '}
           <a href="mailto:culturedrabbit@gmail.com">culturedrabbit@gmail.com</a>
         </p>
+
+        <p className="label">Version {versionLabel()}</p>
 
         <div className="dialog-actions sticky">
           <button className="primary" onClick={onClose}>Close</button>

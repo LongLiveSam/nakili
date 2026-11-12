@@ -455,6 +455,12 @@ input[type="text"]:focus-visible, textarea:focus-visible, select:focus-visible {
   min-height: 36px; padding: 6px 12px;
   font-size: var(--caption);
 }
+.app-version {
+  font-family: var(--font-mono);
+  font-size: var(--caption);
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
 .app-footer a {
   color: var(--text-secondary); text-decoration: none;
   border-bottom: 1px solid transparent;
