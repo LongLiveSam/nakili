@@ -15,6 +15,9 @@ import { runUserScript } from '../../core/services/userScript';
 import { loadTransformScript } from '../../core/services/pipelineSettings';
 
 import { transcribeClipLocally, isWhisperBetaEnabled } from '../../core/services/localWhisper';
+import {
+  readAloud, speechSynthesisAvailable, type ReadAloudHandle,
+} from '../../core/services/readAloud';
 
 function loadFontSize(): number {
   try {
@@ -52,6 +55,8 @@ export default function EditorView() {
   const [panelOpen, setPanelOpen] = useState(false);
   const [fontSize, setFontSize] = useState(loadFontSize);
   const [reading, setReading] = useState(false);
+  const [readStatus, setReadStatus] = useState<string | null>(null);
+  const readHandleRef = useRef<ReadAloudHandle | null>(null);
   const [scriptStatus, setScriptStatus] = useState<string | null>(null);
   const [sweep, setSweep] = useState<{ ranges: Array<{ start: number; end: number }>; i: number } | null>(null);
   const whisperBeta = isWhisperBetaEnabled();
@@ -100,6 +105,9 @@ export default function EditorView() {
       document.removeEventListener('visibilitychange', onVisibility);
     };
   }, []);
+
+  // Leaving the editor stops narration; it should never outlive the page.
+  useEffect(() => () => { readHandleRef.current?.stop(); }, []);
 
   const syncCursor = () => {
     const ta = taRef.current;
@@ -239,17 +247,36 @@ export default function EditorView() {
     setScriptStatus(result.text === text ? '[SCRIPT RAN — NO CHANGES]' : '[SCRIPT APPLIED]');
   };
 
-  const toggleReading = () => {    if (!('speechSynthesis' in window)) return;
+  const toggleReading = () => {
     if (reading) {
-      speechSynthesis.cancel();
+      readHandleRef.current?.stop();
+      readHandleRef.current = null;
       setReading(false);
+      setReadStatus(null);
       return;
     }
-    const u = new SpeechSynthesisUtterance(text || 'Nothing to read yet.');
-    u.onend = () => setReading(false);
-    u.onerror = () => setReading(false);
-    speechSynthesis.speak(u);
+    if (!speechSynthesisAvailable()) {
+      setReadStatus('[ERROR: SPEECH UNAVAILABLE IN THIS BROWSER]');
+      return;
+    }
+    if (!text.trim()) {
+      setReadStatus('[NOTHING TO READ YET]');
+      return;
+    }
+    readHandleRef.current = readAloud(text, {
+      onEnd: () => {
+        readHandleRef.current = null;
+        setReading(false);
+        setReadStatus(null);
+      },
+      onError: (message) => {
+        readHandleRef.current = null;
+        setReading(false);
+        setReadStatus(`[ERROR: ${message}]`);
+      },
+    });
     setReading(true);
+    setReadStatus('[READING ALOUD]');
   };
 
   const handleShare = async () => {
@@ -320,8 +347,16 @@ export default function EditorView() {
             <button onClick={() => setText(smartTypography(text))}>Smart typography</button>
             <button onClick={() => void runScript()}>Run script</button>
             <button aria-pressed={reading} onClick={toggleReading}>
-              {reading ? '[Reading… stop]' : 'Read aloud'}
+              {reading ? 'Stop reading' : 'Read aloud'}
             </button>
+            {readStatus && (
+              <span
+                role="status"
+                className={readStatus.startsWith('[ERROR') ? 'status-line error' : 'status-line'}
+              >
+                {readStatus}
+              </span>
+            )}
             {whisperBeta && flaggedIndexes.length > 0 && (
               <button onClick={() => void fixFlaggedClips()}>
                 Fix flagged clips ({flaggedIndexes.length})
