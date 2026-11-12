@@ -4,6 +4,10 @@ Nakili uses decimal minor steps: `0.01`, `0.02` … `0.09`, `0.1` … `0.5`, `1.
 `npm run release -- bump` moves one step; `npm run release -- set 0.5` jumps.
 Every release is a git tag (`v0.01`, `v0.5`, `v1.0`).
 
+## v0.09 — 2026-11-12
+
+- Editorial homepage: a serif welcome headline, a quiet note, recent recordings, numbered steps, language and feature sections, and a quiet closing line with no repeated CTAs. Improved hierarchy, spacing and type scale.
+
 ## v0.08 — 2026-11-12
 
 - Removed the landing preview card and replaced the square-thumb toggle with a standard teal switch. The welcome page is now a single-column hero; the social card was regenerated.
