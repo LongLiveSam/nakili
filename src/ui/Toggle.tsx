@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 
 /**
- * Nothing-style mechanical toggle: pill track, square-ended thumb.
+ * Broadcast Desk toggle: pill track, square-ended thumb.
  * Instant-save semantics — writes the backing key on change.
  */
 export function Toggle({

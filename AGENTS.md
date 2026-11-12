@@ -1,8 +1,9 @@
 # Nakili — Agent Instructions
 
 Local-first dictation web app. React 19 + TypeScript + Vite, Zustand, Dexie (IndexedDB), Vitest.
-Design system: Nothing language (`nothing-design` skill) — monochrome, Doto/Space Grotesk/Space Mono,
-no gradients/shadows, inline `[STATUS]` text instead of toasts.
+Design system: Broadcast Desk — warm near-black / warm off-white, signal red, Source Serif 4
+for the transcript, Archivo Narrow for UI, IBM Plex Mono for timecode. Light, dark and system
+modes. No gradients/shadows, inline `[STATUS]` text instead of toasts.
 
 ## Always-on standards
 

@@ -9,7 +9,7 @@ import { usePlaybackStore } from '../playback/playbackStore';
 import { ClipPlayerProvider } from '../playback/ClipPlayerProvider';
 import { PlayHighlightOverlay } from './PlayHighlightOverlay';
 import { TutorialOverlay } from '../../ui/TutorialOverlay';
-import { ArrowLeftIcon } from '../../ui/icons';
+import { ArrowLeftIcon, DownloadIcon, PencilIcon } from '../../ui/icons';
 import { findFillers, smartTypography } from '../../core/services/formatting';
 import { runUserScript } from '../../core/services/userScript';
 import { loadTransformScript } from '../../core/services/pipelineSettings';
@@ -337,9 +337,11 @@ export default function EditorView() {
                   {exportStatus}
                 </span>
               )}
-              <button onClick={() => void handleShare()}>Download</button>
+              <button onClick={() => void handleShare()}>
+                <DownloadIcon /> Download
+              </button>
               <button onClick={() => { setTitleDraft(article.title); setRenaming(true); }}>
-                Rename
+                <PencilIcon /> Rename
               </button>
             </div>
           </div>

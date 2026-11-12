@@ -1,21 +1,18 @@
 import { create } from 'zustand';
 
-export const SKINS = ['paper', 'primer', 'neutral', 'nothing'] as const;
-export type Skin = (typeof SKINS)[number];
-export type Mode = 'light' | 'dark';
+export const MODES = ['system', 'light', 'dark'] as const;
+export type Mode = (typeof MODES)[number];
 
-export const SKIN_LABELS: Record<Skin, string> = {
-  paper: 'Paper',
-  primer: 'Primer',
-  neutral: 'Neutral',
-  nothing: 'Nothing',
+export const MODE_LABELS: Record<Mode, string> = {
+  system: 'System',
+  light: 'Light',
+  dark: 'Dark',
 };
 
 interface ThemeState {
-  skin: Skin;
   mode: Mode;
-  setSkin: (s: Skin) => void;
   setMode: (m: Mode) => void;
+  cycleMode: () => void;
 }
 
 function readLegacyMode(): Mode | null {
@@ -26,42 +23,66 @@ function readLegacyMode(): Mode | null {
   return null;
 }
 
-function readStored(): { skin: Skin; mode: Mode } {
+function readStored(): Mode {
   try {
-    const skin = localStorage.getItem('nakili-skin') as Skin | null;
     const mode = localStorage.getItem('nakili-mode') as Mode | null;
-    return {
-      skin: skin && SKINS.includes(skin) ? skin : 'paper',
-      mode: mode === 'light' || mode === 'dark' ? mode : readLegacyMode() ?? 'dark',
-    };
+    if (mode && MODES.includes(mode)) return mode;
+    return readLegacyMode() ?? 'system';
   } catch {
-    return { skin: 'paper', mode: 'dark' };
+    return 'system';
   }
 }
 
-function applyToDom(skin: Skin, mode: Mode): void {
-  document.documentElement.setAttribute('data-skin', skin);
-  document.documentElement.setAttribute('data-mode', mode);
+function systemPrefersDark(): boolean {
+  try {
+    return typeof window.matchMedia === 'function'
+      && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  } catch {
+    return false;
+  }
+}
+
+export function resolveMode(mode: Mode): 'light' | 'dark' {
+  if (mode === 'system') return systemPrefersDark() ? 'dark' : 'light';
+  return mode;
+}
+
+function applyToDom(mode: Mode): void {
+  const resolved = resolveMode(mode);
+  document.documentElement.setAttribute('data-mode', resolved);
+  document.documentElement.setAttribute('data-mode-preference', mode);
+  document.querySelector('meta[name="theme-color"]')
+    ?.setAttribute('content', resolved === 'dark' ? '#12100e' : '#eef0ec');
 }
 
 /** Apply stored theme before first paint; call once from main.tsx. */
 export function initTheme(): void {
-  const { skin, mode } = readStored();
-  applyToDom(skin, mode);
-  useThemeStore.setState({ skin, mode });
+  const mode = readStored();
+  applyToDom(mode);
+  useThemeStore.setState({ mode });
+  try {
+    if (typeof window.matchMedia === 'function') {
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+        if (useThemeStore.getState().mode === 'system') applyToDom('system');
+      });
+    }
+  } catch {
+    /* older browsers: the initial resolution still applies */
+  }
 }
 
 export const useThemeStore = create<ThemeState>((set, get) => ({
-  skin: 'paper',
-  mode: 'dark',
-  setSkin: (skin) => {
-    applyToDom(skin, get().mode);
-    try { localStorage.setItem('nakili-skin', skin); } catch { /* ignore */ }
-    set({ skin });
-  },
+  mode: 'system',
   setMode: (mode) => {
-    applyToDom(get().skin, mode);
-    try { localStorage.setItem('nakili-mode', mode); localStorage.removeItem('nakili-theme'); } catch { /* ignore */ }
+    applyToDom(mode);
+    try {
+      localStorage.setItem('nakili-mode', mode);
+      localStorage.removeItem('nakili-theme');
+    } catch { /* ignore */ }
     set({ mode });
+  },
+  cycleMode: () => {
+    const i = MODES.indexOf(get().mode);
+    get().setMode(MODES[(i + 1) % MODES.length]);
   },
 }));

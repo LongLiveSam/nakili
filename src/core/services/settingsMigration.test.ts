@@ -106,6 +106,13 @@ describe('salvageSettings', () => {
     expect(report.issues).toEqual([]);
   });
 
+  it('keeps the system color mode', () => {
+    const { storage, data } = makeStorage({ 'nakili-mode': 'system' });
+    const report = salvageSettings(storage);
+    expect(data.get('nakili-mode')).toBe('system');
+    expect(report.issues).toEqual([]);
+  });
+
   it('repairs an out-of-range editor font size', () => {
     const { storage, data } = makeStorage({ 'nakili-fontsize': '999' });
     const report = salvageSettings(storage);

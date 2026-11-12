@@ -1,10 +1,8 @@
 import { MicIcon, PlayIcon, SearchIcon } from '../../ui/icons';
 
 /**
- * Nothing-style landing: shown on Home until the first recording exists.
- * Three-layer hierarchy — Doto display, Space Grotesk body, mono caps labels.
- * One expressive moment: the oversized dot-matrix wordmark, paired with a
- * plain preview of the real editor.
+ * Broadcast Desk landing: shown on Home until the first recording exists.
+ * The transcript is the program; the preview is the cue sheet.
  */
 export function Landing({ onStart, onImport }: { onStart: () => void; onImport?: () => void }) {
   return (
@@ -20,7 +18,7 @@ export function Landing({ onStart, onImport }: { onStart: () => void; onImport?:
             Dictate a draft, edit the words in place, and keep the audio on your device.
           </p>
           <div className="hero-actions">
-            <button className="primary" onClick={onStart}>
+            <button className="cta" onClick={onStart}>
               Start dictating
             </button>
             {onImport && (
@@ -93,7 +91,7 @@ export function Landing({ onStart, onImport }: { onStart: () => void; onImport?:
         <p className="status-line">
           [PRIVACY: ALL AUDIO AND TEXT STAY ON YOUR DEVICE. NOTHING IS UPLOADED.]
         </p>
-        <button className="primary" onClick={onStart}>Start dictating</button>
+        <button className="cta" onClick={onStart}>Start dictating</button>
       </section>
     </div>
   );

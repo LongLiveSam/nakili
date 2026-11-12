@@ -111,7 +111,7 @@ export default function LibraryView() {
           <h1>Recordings</h1>
           <div className="view-actions">
             <button onClick={handleImportClick} disabled={importing}>Import audio</button>
-            <button className="primary" onClick={() => void handleNew()}>New recording</button>
+            <button className="cta" onClick={() => void handleNew()}>New recording</button>
           </div>
         </div>
       )}

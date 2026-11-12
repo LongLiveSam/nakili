@@ -17,6 +17,7 @@ import {
   type WhisperModelId,
 } from '../core/services/whisperModels';
 import { Toggle } from './Toggle';
+import { MODES, MODE_LABELS, useThemeStore, type Mode } from './theme';
 
 interface Props {
   open: boolean;
@@ -136,6 +137,8 @@ export function SettingsDialog({ open, onClose }: Props) {
   const [modelBytes, setModelBytes] = useState<number | null>(null);
   const [modelStatus, setModelStatus] = useState<string | null>(null);
   const [modelProgress, setModelProgress] = useState<number | null>(null);
+  const mode = useThemeStore((s) => s.mode);
+  const setMode = useThemeStore((s) => s.setMode);
 
   useEffect(() => {
     const el = ref.current;
@@ -239,6 +242,22 @@ export function SettingsDialog({ open, onClose }: Props) {
     >
       <button className="ghost dialog-close" aria-label="Close" onClick={onClose}>[ X ]</button>
       <h2 style={{ marginTop: 0 }}>Settings</h2>
+
+      <h3>Appearance</h3>
+      <label className="label" htmlFor="color-mode">Color mode</label>
+      <select
+        id="color-mode"
+        value={mode}
+        onChange={(e) => setMode(e.target.value as Mode)}
+        className="field"
+      >
+        {MODES.map((m) => (
+          <option key={m} value={m}>{MODE_LABELS[m]}</option>
+        ))}
+      </select>
+      <p style={{ color: 'var(--text-disabled)', fontSize: 12 }}>
+        System follows your device’s light or dark setting and updates when it changes.
+      </p>
 
       <h3>Recognition language</h3>
       <label className="visually-hidden" htmlFor="lang">Recognition language</label>

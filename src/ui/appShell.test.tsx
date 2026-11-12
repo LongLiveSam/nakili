@@ -5,6 +5,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import App from '../App';
 import { useAppStore } from './appStore';
 import { useLibraryStore } from '../features/library/libraryStore';
+import { useThemeStore } from './theme';
 import { APP_VERSION } from '../version';
 
 describe('app shell', () => {
@@ -21,7 +22,6 @@ describe('app shell', () => {
     // Empty, already-loaded library: the landing renders on first paint instead
     // of waiting on an IndexedDB round trip (which made this suite timing-flaky).
     useLibraryStore.setState({ articles: [], loaded: true });
-    document.documentElement.setAttribute('data-skin', 'paper');
     document.documentElement.setAttribute('data-mode', 'dark');
   });
 
@@ -63,17 +63,18 @@ describe('app shell', () => {
     vi.doUnmock('./speechSupport');
   });
 
-  it('cycles design skins and toggles light/dark mode', async () => {
+  it('cycles color mode through system, light and dark', async () => {
     render(<App />);
-    document.documentElement.setAttribute('data-skin', 'paper');
-    document.documentElement.setAttribute('data-mode', 'dark');
+    useThemeStore.setState({ mode: 'system' });
+    document.documentElement.setAttribute('data-mode', 'light');
 
-    await userEvent.click(screen.getByRole('button', { name: /design: paper/i }));
-    expect(document.documentElement.getAttribute('data-skin')).toBe('primer');
-
-    await userEvent.click(screen.getByRole('button', { name: /mode: dark/i }));
+    await userEvent.click(screen.getByRole('button', { name: /color mode: system/i }));
+    expect(useThemeStore.getState().mode).toBe('light');
     expect(document.documentElement.getAttribute('data-mode')).toBe('light');
-    expect(screen.getByRole('button', { name: /mode: light/i })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: /color mode: light/i }));
+    expect(useThemeStore.getState().mode).toBe('dark');
+    expect(document.documentElement.getAttribute('data-mode')).toBe('dark');
   });
 
   it('navigates to record view from the landing CTA', async () => {

@@ -92,7 +92,7 @@ function ensureAudio(): HTMLAudioElement {
     const detail = audioEl?.error
       ? `${audioEl.error.message || audioEl.error.code}`
       : 'UNKNOWN';
-    // Inline status — no toasts in the Nothing system.
+    // Inline status — no toasts in the Broadcast Desk system.
     release();
     usePlaybackStore.setState({ playingIndex: null, error: `[PLAYBACK ERROR: ${detail.toUpperCase()}]` });
   });

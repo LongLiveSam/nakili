@@ -94,7 +94,7 @@ export function ClipSidebar({
       className={`clip-sidebar clip-panel${panelOpen ? ' open' : ''}`}
       data-open={panelOpen ? 'true' : 'false'}
     >
-      <h2>Clips</h2>
+      <h2>Cue sheet</h2>
       {error && (
         <p className="status-line error" role="alert" style={{ margin: '0 0 var(--space-sm)' }}>
           {error}
@@ -164,7 +164,7 @@ export function ClipSidebar({
                     value={rate}
                     onChange={(e) => setRate(Number(e.target.value))}
                     style={{
-                      fontFamily: '"Space Mono", monospace',
+                      fontFamily: 'var(--font-mono)',
                       fontSize: 12,
                       background: 'var(--surface)',
                       color: 'var(--text-primary)',

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAppStore, initHistorySync } from './ui/appStore';
-import { useThemeStore, SKINS, SKIN_LABELS, type Skin } from './ui/theme';
+import { useThemeStore, MODE_LABELS } from './ui/theme';
 import { UnsupportedBrowserNotice } from './ui/UnsupportedBrowserNotice';
 import { speechSupported } from './ui/speechSupport';
 import { HelpDialog } from './ui/HelpDialog';
@@ -15,15 +15,8 @@ function AppShell({ children }: { children: React.ReactNode }) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const navigate = useAppStore((s) => s.navigate);
   const view = useAppStore((s) => s.view);
-  const skin = useThemeStore((s) => s.skin);
   const mode = useThemeStore((s) => s.mode);
-  const setSkin = useThemeStore((s) => s.setSkin);
-  const setMode = useThemeStore((s) => s.setMode);
-
-  const cycleSkin = () => {
-    const i = SKINS.indexOf(skin);
-    setSkin(SKINS[(i + 1) % SKINS.length] as Skin);
-  };
+  const cycleMode = useThemeStore((s) => s.cycleMode);
 
   return (
     <div className="app-frame">
@@ -56,17 +49,10 @@ function AppShell({ children }: { children: React.ReactNode }) {
           </a>
           <button
             className="ghost"
-            onClick={cycleSkin}
-            aria-label={`Design: ${SKIN_LABELS[skin]}. Activate to cycle`}
+            onClick={cycleMode}
+            aria-label={`Color mode: ${MODE_LABELS[mode]}. Activate to cycle`}
           >
-            Design: {SKIN_LABELS[skin]}
-          </button>
-          <button
-            className="ghost"
-            onClick={() => setMode(mode === 'dark' ? 'light' : 'dark')}
-            aria-label={`Mode: ${mode}. Activate to switch`}
-          >
-            Mode: {mode}
+            Mode: {MODE_LABELS[mode]}
           </button>
         </span>
       </footer>

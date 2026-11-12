@@ -59,7 +59,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
           await putSegments(cur.segments);
           set({ saved: true, saveError: false });
         } catch {
-          // Inline status only — no toasts in the Nothing system.
+          // Inline status only — no toasts in the Broadcast Desk system.
           set({ saveError: true });
         }
       })();

@@ -1,21 +1,34 @@
 <!doctype html>
-<html lang="en" data-skin="paper" data-mode="dark" data-type="software">
+<html lang="en" data-mode="dark" data-mode-preference="system" data-type="software">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="%BASE_URL%favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Nakili — private, local-first dictation. Speak, see words live, edit the transcript, and jump back into the audio via 30-second clips." />
-    <meta name="theme-color" content="#000000" />
+    <meta name="theme-color" content="#12100e" />
     <meta name="site-kind" content="software" />
     <meta property="og:title" content="Nakili — local-first dictation" />
     <meta property="og:description" content="Speak, edit the transcript, verify against 30-second clips. Everything stays in your browser." />
     <meta property="og:type" content="website" />
     <link rel="manifest" href="%BASE_URL%manifest.webmanifest" />
     <title>Nakili — local-first dictation</title>
+    <script>
+      // Resolve the color mode before first paint so the page never flashes.
+      (function () {
+        try {
+          var mode = localStorage.getItem('nakili-mode') || 'system';
+          var dark = mode === 'dark' || (mode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          document.documentElement.setAttribute('data-mode', dark ? 'dark' : 'light');
+          document.documentElement.setAttribute('data-mode-preference', mode);
+          var meta = document.querySelector('meta[name="theme-color"]');
+          if (meta) meta.setAttribute('content', dark ? '#12100e' : '#eef0ec');
+        } catch (e) { /* keep the defaults */ }
+      })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Doto:wght@400..900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Serif+4:wght@400;600;700&display=swap"
       rel="stylesheet"
     />
   </head>

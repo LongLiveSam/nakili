@@ -87,9 +87,11 @@ Deployment options are documented in [docs/DEPLOY.md](docs/DEPLOY.md).
 
 ## Design
 
-Nothing design language: monochrome, typographic, industrial - Doto / Space
-Grotesk / Space Mono, OLED-dark and paper-light themes, segmented progress
-bars, inline `[STATUS]` text instead of toasts.
+Broadcast Desk: a warm near-black or cool studio-wall surface, signal red for
+the tally and the primary action, Source Serif 4 for the transcript, Archivo
+Narrow for the interface, and IBM Plex Mono for timecode. Light, dark and system
+modes; flat surfaces, hairline rules, no gradients or shadows, inline `[STATUS]`
+text instead of toasts.
 
 ## Roadmap
 
